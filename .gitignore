@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Ignore heavy raw phone camera footage (keeps repo < 25MB for lightning-fast GitHub Pages deploy)
+referensi/*.mp4
+
+# Local logs
+*.log

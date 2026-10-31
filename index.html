@@ -1,0 +1,2566 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PT Maziya Medical Global — 3D Interactive Floor Plan & CDAKB Room Tour</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0F2537;
+      --navy-light: #16354D;
+      --teal: #008080;
+      --teal-bright: #00A896;
+      --clinical: #F8FAFC;
+      --blue-tape: #0284C7;
+      --yellow-tape: #EAB308;
+      --red-tape: #DC2626;
+      --green-tape: #16A34A;
+      --panel-bg: rgba(15, 37, 55, 0.88);
+      --border-glass: rgba(255, 255, 255, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0B1926;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #F8FAFC;
+    }
+
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
+    #label-container {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* TOP BAR */
+    .top-header {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+      gap: 12px;
+    }
+
+    .brand-banner {
+      pointer-events: auto;
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border-glass);
+      border-left: 4px solid var(--teal-bright);
+      padding: 12px 18px;
+      border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      max-width: 520px;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #5EEAD4;
+      background: rgba(0, 128, 128, 0.25);
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #FFFFFF;
+    }
+
+    .brand-sub {
+      font-size: 11.5px;
+      color: #94A3B8;
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    /* TOP RIGHT CONTROLS */
+    .top-actions {
+      pointer-events: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn-action {
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border-glass);
+      color: #F1F5F9;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 9px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .btn-action:hover {
+      background: var(--navy-light);
+      border-color: var(--teal-bright);
+      transform: translateY(-1px);
+    }
+
+    .btn-action.active {
+      background: linear-gradient(135deg, #008080 0%, #0F5257 100%);
+      border-color: #5EEAD4;
+      color: #FFFFFF;
+    }
+
+    .dot-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    /* LEFT WAYPOINT NAVIGATION PANEL */
+    .nav-panel {
+      position: fixed;
+      top: 112px;
+      left: 16px;
+      bottom: 16px;
+      width: 320px;
+      z-index: 10;
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    .nav-panel-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-panel-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #CBD5E1;
+    }
+
+    .nav-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-list::-webkit-scrollbar {
+      width: 4px;
+    }
+    .nav-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    .waypoint-btn {
+      width: 100%;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #E2E8F0;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .waypoint-btn:hover {
+      background: rgba(0, 168, 150, 0.15);
+      border-color: rgba(94, 234, 212, 0.4);
+      transform: translateX(3px);
+    }
+
+    .waypoint-btn.active {
+      background: linear-gradient(90deg, rgba(0, 128, 128, 0.45) 0%, rgba(15, 37, 55, 0.7) 100%);
+      border-color: #2DD4BF;
+      box-shadow: inset 3px 0 0 #2DD4BF;
+    }
+
+    .wp-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #5EEAD4;
+      background: rgba(0, 128, 128, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .wp-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .wp-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .wp-desc {
+      font-size: 10.5px;
+      color: #94A3B8;
+      line-height: 1.35;
+    }
+
+    .tour-controls {
+      padding: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(9, 22, 34, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-autoplay {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 8px;
+      border: 1px solid #2DD4BF;
+      background: linear-gradient(135deg, #008080 0%, #0D9488 100%);
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 12.5px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(13, 148, 136, 0.4);
+    }
+
+    .btn-autoplay:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-autoplay.playing {
+      background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+      border-color: #FCA5A5;
+      box-shadow: 0 4px 16px rgba(220, 38, 38, 0.45);
+    }
+
+    .kbd-hint {
+      font-size: 10.5px;
+      color: #94A3B8;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .kbd-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: #E2E8F0;
+    }
+
+    /* RIGHT INFO / SPEC DRAWER */
+    .spec-card {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      width: 350px;
+      z-index: 10;
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .spec-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #5EEAD4;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .spec-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 10px;
+      margin-bottom: 10px;
+      font-size: 11px;
+    }
+
+    .spec-item {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 6px 8px;
+      border-radius: 6px;
+      border-left: 2px solid #00A896;
+    }
+
+    .spec-label {
+      color: #94A3B8;
+      font-size: 10px;
+    }
+
+    .spec-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: #F8FAFC;
+      font-size: 11.5px;
+    }
+
+    .legend-bar {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      font-size: 10.5px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #CBD5E1;
+    }
+
+    .swatch {
+      width: 12px;
+      height: 4px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* CSS2D FLOATING LABELS */
+    .label-dim {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #0F2537;
+      background: rgba(248, 250, 252, 0.92);
+      border: 1.5px solid #0F2537;
+      padding: 2px 6px;
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      white-space: nowrap;
+    }
+
+    .label-zone {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: #FFFFFF;
+      background: rgba(15, 37, 55, 0.9);
+      border: 1px solid #2DD4BF;
+      border-left: 3px solid #2DD4BF;
+      padding: 4px 8px;
+      border-radius: 5px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      white-space: nowrap;
+    }
+
+    .label-sensor {
+      font-family: 'Inter', sans-serif;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #FEF2F2;
+      background: rgba(185, 28, 28, 0.92);
+      border: 1px solid #FCA5A5;
+      padding: 3px 8px;
+      border-radius: 999px;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.45);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .label-sensor.sensor-teal {
+      background: rgba(3, 105, 161, 0.92);
+      border-color: #7DD3FC;
+    }
+
+    /* PHOTO MODAL */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(6, 15, 25, 0.85);
+      backdrop-filter: blur(10px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #0F2537;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+      max-width: 960px;
+      width: 100%;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+    }
+
+    .modal-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body {
+      padding: 18px 20px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .ref-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .ref-card img, .ref-card video {
+      width: 100%;
+      height: 170px;
+      object-fit: cover;
+      display: block;
+      background: #000;
+    }
+
+    .ref-caption {
+      padding: 8px 10px;
+      font-size: 11px;
+      color: #E2E8F0;
+      font-weight: 600;
+    }
+
+    /* DRAWER & COLLAPSIBLE CONTROLS FOR LAPTOP & MOBILE */
+    .nav-panel {
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      will-change: transform, opacity;
+    }
+
+    .nav-panel.collapsed {
+      transform: translateX(-360px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .spec-card {
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      will-change: transform, opacity;
+    }
+
+    .spec-card.collapsed {
+      transform: translateX(420px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .panel-close-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #94A3B8;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .panel-close-btn:hover {
+      background: rgba(220, 38, 38, 0.3);
+      color: #F8FAFC;
+      border-color: #EF4444;
+    }
+
+    /* BACKDROP OVERLAY FOR MOBILE DRAWERS */
+    #drawer-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(11, 25, 38, 0.65);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 85;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    #drawer-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* MOBILE FLOATING BOTTOM DOCK */
+    #mobile-bottom-dock {
+      display: none;
+      position: fixed;
+      bottom: 14px;
+      left: 12px;
+      right: 12px;
+      height: 54px;
+      background: rgba(15, 37, 55, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+      z-index: 90;
+      padding: 0 8px;
+      align-items: center;
+      justify-content: space-around;
+      gap: 6px;
+    }
+
+    .dock-btn {
+      flex: 1;
+      height: 42px;
+      min-width: 44px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #E2E8F0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .dock-btn span.dock-icon {
+      font-size: 14px;
+    }
+    .dock-btn:active, .dock-btn.active {
+      background: rgba(0, 128, 128, 0.4);
+      border-color: #00A896;
+      color: #5EEAD4;
+      transform: scale(0.96);
+    }
+
+    /* VIRTUAL TOUCH D-PAD FOR MOBILE WALKING */
+    #virtual-dpad {
+      display: none;
+      position: fixed;
+      bottom: 78px;
+      right: 14px;
+      width: 130px;
+      height: 130px;
+      background: rgba(15, 37, 55, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 168, 150, 0.35);
+      border-radius: 20px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+      z-index: 89;
+      padding: 8px;
+      touch-action: none;
+    }
+    #virtual-dpad.visible {
+      display: block;
+    }
+    .dpad-grid {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    .dpad-btn {
+      position: absolute;
+      width: 38px;
+      height: 38px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: #FFFFFF;
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .dpad-btn:active {
+      background: #008080;
+      transform: scale(0.92);
+      border-color: #5EEAD4;
+    }
+    .dpad-up    { top: 0; left: 38px; }
+    .dpad-down  { bottom: 0; left: 38px; }
+    .dpad-left  { top: 38px; left: 0; }
+    .dpad-right { top: 38px; right: 0; }
+    .dpad-center {
+      position: absolute;
+      top: 40px;
+      left: 40px;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+      color: #5EEAD4;
+      pointer-events: none;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* RESPONSIVE MEDIA QUERIES (TABLET & MOBILE) */
+    @media (max-width: 900px) {
+      .top-header {
+        height: auto;
+        padding: 10px 14px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .brand-sub {
+        font-size: 10px;
+        line-height: 1.35;
+      }
+      .top-actions {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+      .btn-action {
+        font-size: 11px;
+        padding: 6px 10px;
+        white-space: nowrap;
+      }
+    }
+
+    @media (max-width: 768px) {
+      #mobile-bottom-dock {
+        display: flex;
+      }
+
+      .top-header {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        padding: 8px 12px;
+        border-radius: 12px;
+        gap: 4px;
+      }
+      .brand-sub {
+        display: none; /* Hide long subtitle on phones to free up 3D viewport */
+      }
+      .top-actions {
+        display: none; /* Relocated to mobile bottom dock */
+      }
+
+      /* MOBILE BOTTOM SHEET FOR WAYPOINTS */
+      .nav-panel {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-height: 74vh;
+        border-radius: 20px 20px 0 0;
+        z-index: 120;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom: none;
+        padding: 16px;
+        transform: translateY(105%);
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .nav-panel.mobile-open {
+        transform: translateY(0);
+      }
+      .nav-panel.collapsed {
+        transform: translateY(105%);
+        opacity: 1;
+        pointer-events: none;
+      }
+      .nav-list {
+        max-height: calc(74vh - 150px);
+        gap: 6px;
+      }
+      .waypoint-btn {
+        padding: 10px 12px;
+        min-height: 48px; /* Thumb tap target */
+      }
+      .wp-name {
+        font-size: 12.5px;
+      }
+      .wp-desc {
+        font-size: 10px;
+      }
+
+      /* MOBILE BOTTOM SHEET FOR SPEC CARD */
+      .spec-card {
+        display: block;
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-height: 76vh;
+        border-radius: 20px 20px 0 0;
+        z-index: 120;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom: none;
+        padding: 16px;
+        transform: translateY(105%);
+        opacity: 1;
+        pointer-events: auto;
+        overflow-y: auto;
+      }
+      .spec-card.mobile-open {
+        transform: translateY(0);
+      }
+      .spec-card.collapsed {
+        transform: translateY(105%);
+        opacity: 1;
+        pointer-events: none;
+      }
+      .spec-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .legend-bar {
+        grid-template-columns: 1fr;
+        gap: 5px;
+      }
+
+      /* Compact CSS2D Labels on phone screens */
+      .css2d-label {
+        font-size: 9.5px !important;
+        padding: 3px 6px !important;
+      }
+      .label-dim {
+        font-size: 9px !important;
+      }
+    }
+  
+    /* ARCHITECTURAL TIKTOK PINS (@griya.studio / @rjn_ancel3d style) */
+    .architectural-pin {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      pointer-events: auto !important;
+      transform: translate(-50%, -100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s;
+      z-index: 50;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .architectural-pin:hover {
+      transform: translate(-50%, -115%) scale(1.08);
+      filter: drop-shadow(0 6px 16px rgba(0, 168, 150, 0.6));
+    }
+    .pin-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #008080, #00A896);
+      border: 2px solid #FFFFFF;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .pin-circle::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #00A896;
+    }
+    .pin-card {
+      background: rgba(15, 37, 55, 0.94);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 4px 10px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+      white-space: nowrap;
+    }
+    .pin-num {
+      font-size: 9px;
+      font-weight: 700;
+      color: #5EEAD4;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .pin-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #F8FAFC;
+    }
+
+    /* ARCHITECTURAL CAD DIMENSION LINES */
+    .cad-dimension-tag {
+      background: rgba(15, 37, 55, 0.94);
+      border: 1.5px solid #0284C7;
+      border-radius: 6px;
+      padding: 3px 8px;
+      color: #38BDF8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* SHARE MODAL & TOAST */
+    .share-toast {
+      position: fixed;
+      top: 84px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(0, 128, 128, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid #5EEAD4;
+      color: #FFFFFF;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .share-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+</style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+
+  <div id="canvas-container"></div>
+  <div id="label-container"></div>
+
+  <!-- TOP BAR -->
+  <header class="top-header">
+    <div class="brand-banner">
+      <div class="brand-badge">
+        <span>CDAKB KEMENKES RI</span> • <span>ZERO STRUCTURAL DEMOLITION</span>
+      </div>
+      <div class="brand-title">PT MAZIYA MEDICAL GLOBAL</div>
+      <div class="brand-sub">
+        3D Interactive Floor Plan & Audit-Ready Room Tour • Skala 1:1 Meter<br/>
+        Lebar Fasad <strong>22.2m</strong> | Gudang Kitchen <strong>15.0m × 3.0m × 3.0m</strong> | Kantor PJT <strong>1.79m × 2.76m × 2.6m</strong>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btn-toggle-dollhouse" class="btn-action" title="Beralih antara Mode Maket Potongan 1.4m dan Mode Realistis Penuh">
+        <span id="dollhouse-icon">🏠</span>
+        <span id="dollhouse-text">Mode Maket (Potongan)</span>
+      </button>
+      <button id="btn-share-link" class="btn-action" title="Salin Tautan Publik untuk Berbagi di WhatsApp / Medsos">
+        <span>🔗 Bagikan</span>
+      </button>
+      <button id="btn-toggle-nav" class="btn-action active"  title="Buka/Tutup Menu Waypoints Tour">
+        <span>📍 Waypoints Tour</span>
+      </button>
+      <button id="btn-toggle-spec" class="btn-action active" title="Buka/Tutup Panel Spesifikasi & Audit">
+        <span>📋 Info Audit CDAKB</span>
+      </button>
+      <button id="btn-toggle-labels" class="btn-action active" title="Tampilkan/Sembunyikan Label Ukuran & Marka Lantai">
+        <span class="dot-indicator"></span>
+        <span>Ukuran & Marka</span>
+      </button>
+      <button id="btn-toggle-roof" class="btn-action" title="Tampilkan/Sembunyikan Kanopi & Tangga Luar">
+        <span>Kanopi Luar</span>
+      </button>
+      <button id="btn-open-ref" class="btn-action" title="Lihat Foto & Video Asli Ruangan">
+        <span>Foto & Video Asli</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- LEFT WAYPOINT MENU -->
+  <aside class="nav-panel">
+    <div class="nav-panel-header">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="nav-panel-title">Street-View Waypoints</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5EEAD4;">Y = 1.65m</span>
+      </div>
+      <button class="panel-close-btn" id="btn-close-nav" title="Tutup Menu">✕</button>
+    </div>
+
+    <div class="nav-list" id="waypoint-list">
+      <button class="waypoint-btn active" data-wp="0">
+        <span class="wp-num">[0]</span>
+        <div class="wp-info">
+          <span class="wp-name">Bird-Eye Blueprint</span>
+          <span class="wp-desc">Tampak atas seluruh denah kantor, klinik/apotek & gudang 15m</span>
+        </div>
+      </button>
+      <button class="waypoint-btn" data-wp="1">
+        <span class="wp-num">[1]</span>
+        <div class="wp-info">
+          <span class="wp-name">Pintu Masuk & Fasad Depan</span>
+          <span class="wp-desc">Bentang depan 22.2m, halaman parkir 9.3m, kanopi & tangga besi</span>
+        </div>
+      </button>
+      <button class="waypoint-btn" data-wp="2">
+        <span class="wp-num">[2]</span>
+        <div class="wp-info">
+          <span class="wp-name">Ruang Direktur & Wadir PT MMG</span>
+          <span class="wp-desc">Kantor dekat Kamar Mandi (1.79m × 2.76m × 2.6m) — 2 Meja Eksekutif & Lemari Legalitas</span>
+        </div>
+      </button>
+      <button class="waypoint-btn" data-wp="3">
+        <span class="wp-num">[3]</span>
+        <div class="wp-info">
+          <span class="wp-name">Ruang PJT & Buffer Stok Alkes</span>
+          <span class="wp-desc">Ruang Depan (Eks-Konseling) + Meja PJT, Telepon Fixed Line & Display Sampel Bedah</span>
+        </div>
+      </button>
+      <button class="waypoint-btn" data-wp="4">
+        <span class="wp-num">[4]</span>
+        <div class="wp-info">
+          <span class="wp-name">Zona D: Penerimaan, QC & Labeling AKL</span>
+          <span class="wp-desc">Area Lantai Coklat: Bukaan Pass-Through, Meja QC 1.5m, Palet Kargo, Marka Biru #0284C7</span>
+        </div>
+      </button>
+      <button class="waypoint-btn" data-wp="5">
+        <span class="wp-num">[5]</span>
+        <div class="wp-info">
+          <span class="wp-name">Gudang Utama CDAKB (15m × 3m × 3m)</span>
+          <span class="wp-desc">Pantry s/d Kitchen & Sofa Hijau: 5 Rak Heavy-Duty, Marka Kuning/Hijau, AC & Suhu Terkontrol</span>
+        </div>
+      </button>
+      <button class="waypoint-btn" data-wp="6">
+        <span class="wp-num">[6]</span>
+        <div class="wp-info">
+          <span class="wp-name">Sudut Lemari Karantina & Keamanan</span>
+          <span class="wp-desc">Lemari Besi Merah Terkunci (Reject/Karantina), Marka Merah & Perangkap Tikus</span>
+        </div>
+      </button>
+    </div>
+
+    <div class="tour-controls">
+      <button id="btn-autoplay" class="btn-autoplay">
+        <span id="autoplay-icon">▶</span>
+        <span id="autoplay-text">Auto-Play Room Tour (Pos 1–6)</span>
+      </button>
+      <div class="kbd-hint">
+        Navigasi Manual: <span class="kbd-tag">W</span><span class="kbd-tag">A</span><span class="kbd-tag">S</span><span class="kbd-tag">D</span> / <span class="kbd-tag">↑</span><span class="kbd-tag">↓</span><span class="kbd-tag">←</span><span class="kbd-tag">→</span> + Drag Mouse
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT BOTTOM DIMENSION & CDAKB LEGEND -->
+  <section class="spec-card">
+    <div class="spec-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span>Data Dimensi Aktual (1 Unit = 1 Meter)</span>
+        <span style="background:rgba(0,168,150,0.25);border:1px solid #00A896;color:#5EEAD4;font-size:9.5px;padding:2px 6px;border-radius:4px;font-weight:700;">CDAKB READY</span>
+      </div>
+      <button class="panel-close-btn" id="btn-close-spec" title="Tutup Panel">✕</button>
+    </div>
+    <div class="spec-grid">
+      <div class="spec-item">
+        <div class="spec-label">Lebar Depan Bangunan</div>
+        <div class="spec-val">22.20 m (Z: 0–9.3m)</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Gudang + Kitchen Set</div>
+        <div class="spec-val">15.0m × 3.0m × 3.0m</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Kantor Dekat K. Mandi</div>
+        <div class="spec-val">1.79m × 2.76m × 2.6m</div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Suhu & Kelembaban</div>
+        <div class="spec-val">AC Target: 15–25°C / RH 52%</div>
+      </div>
+    </div>
+    <div class="legend-bar">
+      <div class="legend-item"><span class="swatch" style="background:#0284C7;"></span>Biru: Receiving & Labeling AKL</div>
+      <div class="legend-item"><span class="swatch" style="background:#EAB308;"></span>Kuning: Batas Aman Rak (30cm)</div>
+      <div class="legend-item"><span class="swatch" style="background:#DC2626;"></span>Merah: Karantina / Barang Reject</div>
+      <div class="legend-item"><span class="swatch" style="background:#16A34A;"></span>Hijau: Alur Jalan & Flow Barang</div>
+    </div>
+  </section>
+
+  <!-- BACKDROP OVERLAY FOR MOBILE DRAWERS -->
+  <div id="drawer-backdrop"></div>
+  <div id="share-toast" class="share-toast">✓ Tautan Berhasil Disalin! Siap dibagikan di WhatsApp & Media Sosial.</div>
+
+  <!-- MOBILE FLOATING BOTTOM DOCK -->
+  <nav id="mobile-bottom-dock">
+    <button class="dock-btn" id="dock-btn-dollhouse" title="Mode Maket 3D Potongan">
+      <span class="dock-icon" id="dock-dollhouse-icon">🏠</span>
+      <span>Maket</span>
+    </button>
+    <button class="dock-btn" id="dock-btn-share" title="Bagikan Link">
+      <span class="dock-icon">🔗</span>
+      <span>Share</span>
+    </button>
+    <button class="dock-btn" id="dock-btn-nav">
+      <span class="dock-icon">📍</span>
+      <span>Tour</span>
+    </button>
+    <button class="dock-btn" id="dock-btn-spec">
+      <span class="dock-icon">📋</span>
+      <span>Audit</span>
+    </button>
+    <button class="dock-btn" id="dock-btn-labels">
+      <span class="dock-icon">📏</span>
+      <span>Ukuran</span>
+    </button>
+    <button class="dock-btn" id="dock-btn-autoplay">
+      <span class="dock-icon" id="dock-autoplay-icon">▶</span>
+      <span>Auto</span>
+    </button>
+    <button class="dock-btn" id="dock-btn-dpad">
+      <span class="dock-icon">🕹️</span>
+      <span>Jalan</span>
+    </button>
+  </nav>
+
+  <!-- VIRTUAL TOUCH D-PAD FOR MOBILE WALK -->
+  <div id="virtual-dpad">
+    <div class="dpad-grid">
+      <button class="dpad-btn dpad-up" id="dpad-up" title="Maju (W)">▲</button>
+      <button class="dpad-btn dpad-left" id="dpad-left" title="Geser Kiri (A)">◀</button>
+      <div class="dpad-center">WALK</div>
+      <button class="dpad-btn dpad-right" id="dpad-right" title="Geser Kanan (D)">▶</button>
+      <button class="dpad-btn dpad-down" id="dpad-down" title="Mundur (S)">▼</button>
+    </div>
+  </div>
+
+  <!-- MODAL FOR ACTUAL PHOTOS & VIDEOS -->
+  <div class="modal-backdrop" id="ref-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <div style="font-weight:800;font-size:15px;">Referensi Foto & Video Fisik Asli — PT Maziya Medical Global</div>
+          <div style="font-size:11.5px;color:#94A3B8;">Folder /referensi • Digunakan sebagai dasar ekstraksi koordinat (X, Y, Z) tanpa bongkar tembok</div>
+        </div>
+        <button class="btn-action" id="btn-close-ref">✕ Tutup</button>
+      </div>
+      <div class="modal-body">
+        <div class="ref-card">
+          <img src="referensi/01-tampak-depan-pintu-masuk.jpg" alt="Fasad Depan" />
+          <div class="ref-caption">[01] Fasad Depan (Lebar 22.2m) & Kanopi Tangga Besi</div>
+        </div>
+        <div class="ref-card">
+          <img src="referensi/01b-ukuran-parkir-depan-9.3m.jpg" alt="Parkir Depan 9.3m" />
+          <div class="ref-caption">[01b] Pengukuran Halaman Parkir Depan (9.3 Meter)</div>
+        </div>
+        <div class="ref-card">
+          <img src="referensi/05-ruang-belakang-gudang-kitchen-sofa.jpg" alt="Gudang Kitchen" />
+          <div class="ref-caption">[05] Gudang Belakang yang Ada Kitchen Sink (15m × 3m × 3m)</div>
+        </div>
+        <div class="ref-card">
+          <img src="referensi/06-ruang-belakang-gudang-tembus-tengah.jpg" alt="Bukaan Pass-Through" />
+          <div class="ref-caption">[06] Bukaan Tembok Pass-Through Gudang ke Ruang Tengah</div>
+        </div>
+        <div class="ref-card">
+          <img src="referensi/07-ruang-belakang-gudang-exhaust-fan.jpg" alt="Exhaust Fan Gudang" />
+          <div class="ref-caption">[07] Plafon Tinggi 3.0m & Exhaust Fan Maspion di Gudang</div>
+        </div>
+        <div class="ref-card">
+          <video src="referensi/03-tur-lengkap-depan-ke-belakang.mp4" controls preload="metadata"></video>
+          <div class="ref-caption">[Video Tur] Alur Jalan Kaki dari Depan Apotek ke Kamar Mandi & Gudang</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    // ============================================================================
+    // 1. SCENE, CAMERA, RENDERERS & CONTROLS
+    // ============================================================================
+    const container = document.getElementById('canvas-container');
+    const labelContainer = document.getElementById('label-container');
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0B1926);
+    scene.fog = new THREE.FogExp2(0x0B1926, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 150);
+    camera.position.set(11.1, 22.0, -8.0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    container.appendChild(renderer.domElement);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelContainer.appendChild(labelRenderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.maxPolarAngle = Math.PI / 2 - 0.02;
+    controls.minDistance = 0.5;
+    controls.maxDistance = 55;
+    controls.target.set(11.1, 0.8, 4.5);
+
+    // ============================================================================
+    // 2. LIGHTING
+    // ============================================================================
+    const ambientLight = new THREE.AmbientLight(0xF1F5F9, 1.35);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xFFFFFF, 1.6);
+    dirLight.position.set(18, 28, -12);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 1;
+    dirLight.shadow.camera.far = 70;
+    dirLight.shadow.camera.left = -20;
+    dirLight.shadow.camera.right = 25;
+    dirLight.shadow.camera.top = 25;
+    dirLight.shadow.camera.bottom = -20;
+    scene.add(dirLight);
+
+    // Warm indoor point lights for clinical brightness
+    const indoorLights = [
+      [11.0, 2.9, 3.2, 0xFFFBEB, 1.2, 12],
+      [11.0, 2.9, 7.2, 0xF0FDFA, 1.1, 10],
+      [6.2,  2.4, 8.2, 0xFFFFFF, 0.9, 8],
+      [6.5,  2.8, 12.2, 0xF8FAFC, 1.4, 14],
+      [12.5, 2.8, 12.2, 0xF8FAFC, 1.4, 14],
+      [16.5, 2.8, 12.2, 0xF8FAFC, 1.2, 12]
+    ];
+    indoorLights.forEach(([x, y, z, col, intensity, dist]) => {
+      const pl = new THREE.PointLight(col, intensity, dist);
+      pl.position.set(x, y, z);
+      scene.add(pl);
+    });
+
+    // ============================================================================
+    // 3. PROCEDURAL TEXTURES (1x1M GRID, TILES, BRAND PLAQUE)
+    // ============================================================================
+    function createGridFloorTexture(bgHex, lineHex, subLineHex) {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = bgHex;
+      ctx.fillRect(0, 0, 512, 512);
+
+      // 40cm sub-tile lines (2.5 tiles per meter)
+      ctx.strokeStyle = subLineHex;
+      ctx.lineWidth = 2;
+      const stepSub = 512 / 2.5;
+      for (let i = 0; i <= 2.5; i++) {
+        const pos = Math.round(i * stepSub);
+        ctx.beginPath(); ctx.moveTo(pos, 0); ctx.lineTo(pos, 512); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, pos); ctx.lineTo(512, pos); ctx.stroke();
+      }
+
+      // 1x1 meter master grid border
+      ctx.strokeStyle = lineHex;
+      ctx.lineWidth = 5;
+      ctx.strokeRect(0, 0, 512, 512);
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+
+    function createPlaqueTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 256;
+      const ctx = c.getContext('2d');
+
+      ctx.fillStyle = '#0F2537';
+      ctx.fillRect(0, 0, 1024, 256);
+
+      ctx.strokeStyle = '#00A896';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(12, 12, 1000, 232);
+
+      ctx.fillStyle = '#5EEAD4';
+      ctx.font = 'bold 28px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('AUTHORIZED MEDICAL DEVICE IMPORTER & DISTRIBUTOR', 512, 76);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '800 54px Inter, sans-serif';
+      ctx.fillText('PT MAZIYA MEDICAL GLOBAL', 512, 148);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '600 24px JetBrains Mono, monospace';
+      ctx.fillText('CDAKB KEMENKES RI • BUSHIDO SURGICAL INSTRUMENTS', 512, 204);
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    // ============================================================================
+    // 4. MATERIALS
+    // ============================================================================
+    const wallClinicalMat = new THREE.MeshStandardMaterial({
+      color: 0xF8FAFC,
+      roughness: 0.65,
+      metalness: 0.05,
+      transparent: true,
+      opacity: 1.0
+    });
+
+    const exteriorWallList = []; // For dynamic transparency
+
+    function makeWallMat(hex = 0xF8FAFC, isExterior = false) {
+      const m = new THREE.MeshStandardMaterial({
+        color: hex,
+        roughness: 0.6,
+        metalness: 0.05,
+        transparent: true,
+        opacity: 1.0
+      });
+      if (isExterior) exteriorWallList.push(m);
+      return m;
+    }
+
+    const navyMat = new THREE.MeshStandardMaterial({ color: 0x0F2537, roughness: 0.4, metalness: 0.1 });
+    const tealMat = new THREE.MeshStandardMaterial({ color: 0x008080, roughness: 0.35, metalness: 0.2 });
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x93C5FD,
+      transparent: true,
+      opacity: 0.32,
+      roughness: 0.1,
+      transmission: 0.6
+    });
+    const darkFrameMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.4, metalness: 0.5 });
+    const woodDoorMat = new THREE.MeshStandardMaterial({ color: 0x7C2D12, roughness: 0.5 });
+    const woodDeskMat = new THREE.MeshStandardMaterial({ color: 0xB45309, roughness: 0.45 });
+    const steelMat = new THREE.MeshStandardMaterial({ color: 0x64748B, roughness: 0.35, metalness: 0.75 });
+    const redCabinetMat = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.35, metalness: 0.4 });
+    const greenSofaMat = new THREE.MeshStandardMaterial({ color: 0x2E4F3E, roughness: 0.55 });
+
+    // Groups for toggling
+    const labelsAndMarkingsGroup = new THREE.Group();
+    scene.add(labelsAndMarkingsGroup);
+    const cssLabelsList = [];
+
+    const roofAndExteriorGroup = new THREE.Group();
+    scene.add(roofAndExteriorGroup);
+
+    // ============================================================================
+    // 5. HELPER FUNCTIONS FOR WALLS, DOORS, LABELS & FLOOR TAPE
+    // ============================================================================
+    const allWallMeshes = [];
+    function addWallSegment(x1, z1, x2, z2, height = 3.0, thickness = 0.14, hex = 0xF8FAFC, isExterior = false, yOffset = 0) {
+      const dx = x2 - x1;
+      const dz = z2 - z1;
+      const len = Math.hypot(dx, dz);
+      const angle = Math.atan2(dz, dx);
+
+      const geom = new THREE.BoxGeometry(len, height, thickness);
+      const mat = makeWallMat(hex, isExterior);
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.position.set((x1 + x2) / 2, yOffset + height / 2, (z1 + z2) / 2);
+      mesh.rotation.y = -angle;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData.origH = height;
+      mesh.userData.yOffset = yOffset;
+      mesh.userData.fixed = (yOffset > 0); // Don't cut lintels/transoms
+      allWallMeshes.push(mesh);
+      scene.add(mesh);
+      return mesh;
+    }
+
+    function addCSSLabel(text, x, y, z, className = 'label-dim') {
+      const div = document.createElement('div');
+      div.className = className;
+      div.innerHTML = text;
+      const obj = new CSS2DObject(div);
+      obj.position.set(x, y, z);
+      scene.add(obj);
+      cssLabelsList.push(div);
+      return obj;
+    }
+
+    function addFloorTape(x1, z1, x2, z2, colorHex, width = 0.06) {
+      const dx = x2 - x1;
+      const dz = z2 - z1;
+      const len = Math.hypot(dx, dz);
+      const angle = Math.atan2(dz, dx);
+
+      const geom = new THREE.PlaneGeometry(len, width);
+      const mat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide });
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.rotation.z = -angle;
+      mesh.position.set((x1 + x2) / 2, 0.014, (z1 + z2) / 2);
+      labelsAndMarkingsGroup.add(mesh);
+    }
+
+    function addFloorTapeRect(x, z, w, d, colorHex, tapeW = 0.06) {
+      addFloorTape(x, z, x + w, z, colorHex, tapeW);
+      addFloorTape(x + w, z, x + w, z + d, colorHex, tapeW);
+      addFloorTape(x + w, z + d, x, z + d, colorHex, tapeW);
+      addFloorTape(x, z + d, x, z, colorHex, tapeW);
+    }
+
+    function addFlowArrow(x, z, dirAngle = 0, colorHex = 0x16A34A) {
+      const group = new THREE.Group();
+      const stem = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.45, 0.08),
+        new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide })
+      );
+      stem.rotation.x = -Math.PI / 2;
+      group.add(stem);
+
+      const headShape = new THREE.Shape();
+      headShape.moveTo(0, 0.18);
+      headShape.lineTo(0.24, 0);
+      headShape.lineTo(0, -0.18);
+      headShape.closePath();
+      const head = new THREE.Mesh(
+        new THREE.ShapeGeometry(headShape),
+        new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide })
+      );
+      head.rotation.x = -Math.PI / 2;
+      head.position.x = 0.22;
+      group.add(head);
+
+      group.position.set(x, 0.016, z);
+      group.rotation.y = dirAngle;
+      labelsAndMarkingsGroup.add(group);
+    }
+
+    // ============================================================================
+    // 6. BUILD ACTUAL FLOOR GEOMETRY & GRID (TAHAP B DIMENSIONS)
+    // ============================================================================
+    // A. Front Parking & Forecourt: Width 22.2m (X: 0 -> 22.2), Depth 9.3m (Z: -9.3 -> 0)
+    const parkingTex = createGridFloorTexture('#CBD5E1', '#94A3B8', '#E2E8F0');
+    parkingTex.repeat.set(22.2, 9.3);
+    const parkingFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(22.2, 9.3),
+      new THREE.MeshStandardMaterial({ map: parkingTex, roughness: 0.85 })
+    );
+    parkingFloor.rotation.x = -Math.PI / 2;
+    parkingFloor.position.set(11.1, 0, -4.65);
+    parkingFloor.receiveShadow = true;
+    scene.add(parkingFloor);
+
+    // Road in front (Z: -13.3 -> -9.3)
+    const roadMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(28, 4.0),
+      new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.9 })
+    );
+    roadMesh.rotation.x = -Math.PI / 2;
+    roadMesh.position.set(11.1, -0.02, -11.3);
+    scene.add(roadMesh);
+
+    // B. Main Building Front & Middle Section (X: 0 -> 22.2, Z: 0 -> 9.6)
+    const mainFloorTex = createGridFloorTexture('#F1F5F9', '#CBD5E1', '#E2E8F0');
+    mainFloorTex.repeat.set(22.2, 9.6);
+    const mainFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(22.2, 9.6),
+      new THREE.MeshStandardMaterial({ map: mainFloorTex, roughness: 0.5 })
+    );
+    mainFloor.rotation.x = -Math.PI / 2;
+    mainFloor.position.set(11.1, 0.002, 4.8);
+    mainFloor.receiveShadow = true;
+    scene.add(mainFloor);
+
+    // C. Kantor Dekat Kamar Mandi Highlight Floor (X: 5.31 -> 7.10 [1.79m], Z: 6.84 -> 9.60 [2.76m])
+    const pjtFloorTex = createGridFloorTexture('#E0F2FE', '#0284C7', '#BAE6FD');
+    pjtFloorTex.repeat.set(1.79, 2.76);
+    const pjtFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.79, 2.76),
+      new THREE.MeshStandardMaterial({ map: pjtFloorTex, roughness: 0.4 })
+    );
+    pjtFloor.rotation.x = -Math.PI / 2;
+    pjtFloor.position.set(5.31 + 1.79 / 2, 0.006, 6.84 + 2.76 / 2);
+    pjtFloor.receiveShadow = true;
+    scene.add(pjtFloor);
+
+    // D. Gudang Belakang yang Ada Kitchennya: Panjang 15.0m (X: 3.0 -> 18.0), Lebar 3.0m (Z: 9.6 -> 12.6), Tinggi 3.0m
+    const whFloorTex = createGridFloorTexture('#F8FAFC', '#94A3B8', '#E2E8F0');
+    whFloorTex.repeat.set(15.0, 3.0);
+    const whFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(15.0, 3.0),
+      new THREE.MeshStandardMaterial({ map: whFloorTex, roughness: 0.45 })
+    );
+    whFloor.rotation.x = -Math.PI / 2;
+    whFloor.position.set(3.0 + 15.0 / 2, 0.005, 9.6 + 3.0 / 2);
+    whFloor.receiveShadow = true;
+    scene.add(whFloor);
+
+    // ============================================================================
+    // 7. BUILD EXACT WALLS & ARCHITECTURAL FEATURES (ZERO STRUCTURAL DEMOLITION)
+    // ============================================================================
+    // --- FASAD DEPAN & TERAS (Z = 0 to Z = 1.6) ---
+    // Left Wing / Ruang Konseling Front Window Wall (X: 0 -> 7.2, Z = 1.6)
+    addWallSegment(0, 0, 0, 9.6, 3.0, 0.16, 0xF8FAFC, true); // Left boundary wall
+    addWallSegment(0, 1.6, 4.2, 1.6, 3.0, 0.14, 0xF8FAFC, true);
+    // Serving window opening on Z=1.6..5.4 wall
+    addWallSegment(7.2, 1.6, 7.2, 3.8, 3.0, 0.14, 0xF8FAFC, false);
+    // Door to Ruang Konseling (X = 7.2, Z = 3.8 -> 4.7)
+    const konselingDoor = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.1, 0.9), darkFrameMat);
+    konselingDoor.position.set(7.2, 1.05, 4.25);
+    scene.add(konselingDoor);
+
+    // Front Glass Entrance Wall of Main Hall / Apotek & Office (X: 7.2 -> 16.2, Z = 1.6)
+    // Frame pillars
+    addWallSegment(7.2, 1.6, 8.2, 1.6, 3.0, 0.14, 0xF8FAFC, true);
+    addWallSegment(13.2, 1.6, 16.2, 1.6, 3.0, 0.14, 0xF8FAFC, true);
+    // Glass partition & double doors (X: 8.2 -> 13.2, Z = 1.6)
+    const frontGlass = new THREE.Mesh(new THREE.BoxGeometry(5.0, 2.6, 0.06), glassMat);
+    frontGlass.position.set(10.7, 1.3, 1.6);
+    scene.add(frontGlass);
+    // Black aluminum frame bars
+    for (let xPos of [8.2, 9.8, 10.7, 11.6, 13.2]) {
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.07, 2.6, 0.08), darkFrameMat);
+      bar.position.set(xPos, 1.3, 1.6);
+      scene.add(bar);
+    }
+
+    // Right Wing Exterior & Arched Door under staircase (X: 16.2 -> 22.2, Z = 1.6)
+    addWallSegment(16.2, 1.6, 22.2, 1.6, 3.0, 0.15, 0xF8FAFC, true);
+    addWallSegment(22.2, 0, 22.2, 9.6, 3.0, 0.16, 0xF8FAFC, true);
+    const rightArchDoor = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2.2, 0.18), darkFrameMat);
+    rightArchDoor.position.set(18.5, 1.1, 1.6);
+    scene.add(rightArchDoor);
+
+    // Front Porch Pillars (Tiang Teras Putih di foto IMG_9189_04 & IMG_9185)
+    for (let px of [7.2, 11.8, 16.2]) {
+      const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.45, 3.2, 0.45), makeWallMat(0xFFFFFF, true));
+      pillar.position.set(px, 1.6, 0.25);
+      pillar.castShadow = true;
+      scene.add(pillar);
+    }
+
+    // --- ACCENT WALL RUANG DEPAN / DIREKTUR (Deep Navy #0F2537 + Medical Teal #008080) ---
+    const accentWall = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.0, 4.2), navyMat);
+    accentWall.position.set(16.1, 1.5, 3.7);
+    scene.add(accentWall);
+
+    // Medical Teal Trim List (#008080)
+    const tealTrimTop = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 4.22), tealMat);
+    tealTrimTop.position.set(16.08, 2.85, 3.7);
+    scene.add(tealTrimTop);
+    const tealTrimBot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 4.22), tealMat);
+    tealTrimBot.position.set(16.08, 0.05, 3.7);
+    scene.add(tealTrimBot);
+
+    // 3D Plaque "PT MAZIYA MEDICAL GLOBAL" on Accent Wall
+    const plaqueMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.2, 0.8),
+      new THREE.MeshBasicMaterial({ map: createPlaqueTexture() })
+    );
+    plaqueMesh.rotation.y = -Math.PI / 2;
+    plaqueMesh.position.set(16.0, 2.1, 3.7);
+    scene.add(plaqueMesh);
+
+    // --- RUANG TENGAH, KAMAR MANDI, & KANTOR PJT DEKAT KAMAR MANDI ---
+    // Partition between Ruang Depan & Ruang Tengah (Z = 5.8)
+    addWallSegment(0, 5.8, 8.8, 5.8, 3.0, 0.14, 0xF8FAFC, false);
+    addWallSegment(10.4, 5.8, 16.2, 5.8, 3.0, 0.14, 0xF8FAFC, false);
+
+    // 1. Kamar Mandi & Area Wastafel (X: 3.0 -> 5.31, Z: 6.84 -> 9.60)
+    addWallSegment(3.0, 6.84, 5.31, 6.84, 2.6, 0.12, 0xF8FAFC, false);
+    addWallSegment(3.0, 6.84, 3.0, 9.60, 2.6, 0.14, 0xF8FAFC, true);
+    addWallSegment(5.31, 6.84, 5.31, 9.60, 2.6, 0.12, 0xF8FAFC, false);
+    // Wastafel Putih + Cermin + Kloset Duduk (Sesuai IMG_9189_45 & 50)
+    const sinkBasin = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.25, 0.55), new THREE.MeshStandardMaterial({ color: 0xFFFFFF }));
+    sinkBasin.position.set(3.3, 0.85, 7.8);
+    scene.add(sinkBasin);
+    const toiletBowl = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.75, 0.65), new THREE.MeshStandardMaterial({ color: 0xFEFCE8 }));
+    toiletBowl.position.set(3.5, 0.38, 9.1);
+    scene.add(toiletBowl);
+
+    // 2. KANTOR DEKAT KAMAR MANDI (Ukuran Presisi User: Lebar 1.79m, Panjang 2.76m, Tinggi 2.6m)
+    // Coordinates: X from 5.31 to 7.10 (1.79m), Z from 6.84 to 9.60 (2.76m), Height = 2.6m
+    addWallSegment(5.31, 6.84, 6.15, 6.84, 2.6, 0.12, 0xF8FAFC, false);
+    addWallSegment(7.10, 6.84, 7.10, 8.60, 2.6, 0.12, 0xF8FAFC, false);
+    // Ceiling border indicator at Y = 2.6m for Kantor PJT
+    const pjtCeilingFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(1.79, 0.05, 2.76),
+      new THREE.MeshBasicMaterial({ color: 0x0284C7, wireframe: true })
+    );
+    pjtCeilingFrame.position.set(5.31 + 1.79 / 2, 2.6, 6.84 + 2.76 / 2);
+    labelsAndMarkingsGroup.add(pjtCeilingFrame);
+
+    // --- DINDING PEMBATAS TENGAH KE GUDANG BELAKANG (Z = 9.60) ---
+    // Gudang spans X: 3.0 -> 18.0 (15.0m), Z: 9.60 -> 12.60 (3.0m), Height: 3.0m
+    // Left section of Z=9.6 wall (X: 3.0 -> 7.10)
+    addWallSegment(3.0, 9.60, 7.10, 9.60, 3.0, 0.15, 0xF8FAFC, false);
+    // Wooden Panel Door + Loster Ventilasi Kayu to Gudang (X: 7.10 -> 8.00, Z = 9.60) - Seen in IMG_9189_43 & IMG_9191_07
+    const gudangWoodDoor = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.1, 0.08), woodDoorMat);
+    gudangWoodDoor.position.set(7.95, 1.05, 9.95);
+    gudangWoodDoor.rotation.y = Math.PI / 2.3; // Slightly open as in video
+    scene.add(gudangWoodDoor);
+    // Transom / Loster above door
+    addWallSegment(7.10, 9.60, 8.00, 9.60, 0.9, 0.15, 0xF8FAFC, false, 2.1);
+
+    // Wall between Door and Pass-Through Window (X: 8.00 -> 9.80, Z = 9.60)
+    addWallSegment(8.00, 9.60, 9.80, 9.60, 3.0, 0.15, 0xF8FAFC, false);
+
+    // Pass-Through Opening / Bukaan Tembok ke Ruang Tengah (X: 9.80 -> 11.40, Z = 9.60) - Seen in IMG_9180 & IMG_9183
+    // Top header above pass-through
+    addWallSegment(9.80, 9.60, 11.40, 9.60, 0.7, 0.15, 0xF8FAFC, false, 2.3);
+    // Built-in wooden credenza inside the pass-through opening (IMG_9180)
+    const passCredenza = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.85, 0.55), woodDeskMat);
+    passCredenza.position.set(10.6, 0.425, 9.55);
+    passCredenza.castShadow = true;
+    scene.add(passCredenza);
+
+    // Remaining wall Z=9.60 (X: 11.40 -> 18.00)
+    addWallSegment(11.40, 9.60, 18.00, 9.60, 3.0, 0.15, 0xF8FAFC, false);
+
+    // --- DINDING KELILING GUDANG BELAKANG YANG ADA KITCHENNYA (15.0m x 3.0m x 3.0m) ---
+    // Back Wall (Z = 12.60, X: 3.0 -> 18.0, Height = 3.0m)
+    addWallSegment(3.0, 12.60, 18.0, 12.60, 3.0, 0.16, 0xF8FAFC, true);
+    // Left Wall of Gudang (X = 3.0, Z: 9.60 -> 12.60, Height = 3.0m)
+    addWallSegment(3.0, 9.60, 3.0, 12.60, 3.0, 0.16, 0xF8FAFC, true);
+    // Right Wall of Gudang (X = 18.0, Z: 9.60 -> 12.60, Height = 3.0m)
+    addWallSegment(18.0, 9.60, 18.0, 12.60, 3.0, 0.16, 0xF8FAFC, true);
+
+    // Existing Kitchen Sink Counter in Gudang (Seen in IMG_9179 & IMG_9180)
+    const kitchenCounter = new THREE.Mesh(
+      new THREE.BoxGeometry(1.4, 0.85, 0.65),
+      new THREE.MeshStandardMaterial({ color: 0xCBD5E1, roughness: 0.4 })
+    );
+    kitchenCounter.position.set(9.0, 0.425, 10.0);
+    kitchenCounter.castShadow = true;
+    scene.add(kitchenCounter);
+    const sinkBowl = new THREE.Mesh(
+      new THREE.BoxGeometry(0.55, 0.05, 0.45),
+      steelMat
+    );
+    sinkBowl.position.set(9.0, 0.86, 10.0);
+    scene.add(sinkBowl);
+
+    // Exhaust Fan Maspion on Gudang Wall (Seen in IMG_9179 & IMG_9181)
+    const exhaustFan = new THREE.Mesh(
+      new THREE.BoxGeometry(0.42, 0.42, 0.12),
+      new THREE.MeshStandardMaterial({ color: 0xE2E8F0 })
+    );
+    exhaustFan.position.set(8.6, 2.45, 12.50);
+    scene.add(exhaustFan);
+
+    // ============================================================================
+    // 8. EXTERIOR CANOPY, BLACK STEEL STAIRCASE & PARKED SUV (IMG_9185 & IMG_9178)
+    // ============================================================================
+    // Black Steel Staircase on Right Front (X = 19.2, Z: -3.5 -> 1.2)
+    const stairGroup = new THREE.Group();
+    for (let i = 0; i < 14; i++) {
+      const step = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 0.28), darkFrameMat);
+      step.position.set(19.5, 0.22 * (i + 1), -3.2 + i * 0.28);
+      stairGroup.add(step);
+    }
+    const stairRail = new THREE.Mesh(new THREE.BoxGeometry(0.06, 3.4, 4.2), darkFrameMat);
+    stairRail.position.set(18.95, 1.7, -1.2);
+    stairGroup.add(stairRail);
+    roofAndExteriorGroup.add(stairGroup);
+
+    // High Canopy Roof over Terrace (Toggled via button so it doesn't block Bird-Eye view)
+    const canopyRoof = new THREE.Mesh(
+      new THREE.BoxGeometry(15.2, 0.12, 5.5),
+      new THREE.MeshStandardMaterial({ color: 0x334155, transparent: true, opacity: 0.45 })
+    );
+    canopyRoof.position.set(14.6, 3.6, -1.0);
+    roofAndExteriorGroup.add(canopyRoof);
+    roofAndExteriorGroup.visible = false; // Default hidden for clear interior inspection
+
+    // Black SUV Outline in Forecourt (Representing Wuling Almaz in IMG_9185 / IMG_9178)
+    const carGroup = new THREE.Group();
+    const carBody = new THREE.Mesh(
+      new THREE.BoxGeometry(1.85, 1.15, 4.55),
+      new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.25, metalness: 0.6, transparent: true, opacity: 0.55 })
+    );
+    carBody.position.y = 0.75;
+    carGroup.add(carBody);
+    carGroup.position.set(10.5, 0, -3.5);
+    carGroup.rotation.y = 0.08;
+    scene.add(carGroup);
+
+    // ============================================================================
+    // 9. MODULAR 3D FURNITURE & CDAKB WAREHOUSE EQUIPMENT (TAHAP C SPECS)
+    // ============================================================================
+    function createDesk(w, d, h, topHex = 0xB45309, frameHex = 0x1E293B) {
+      const g = new THREE.Group();
+      const top = new THREE.Mesh(
+        new THREE.BoxGeometry(w, 0.05, d),
+        new THREE.MeshStandardMaterial({ color: topHex, roughness: 0.4 })
+      );
+      top.position.y = h - 0.025;
+      top.castShadow = true;
+      g.add(top);
+
+      const legGeo = new THREE.BoxGeometry(0.05, h - 0.05, d - 0.08);
+      const legMat = new THREE.MeshStandardMaterial({ color: frameHex, metalness: 0.5 });
+      const legL = new THREE.Mesh(legGeo, legMat);
+      legL.position.set(-w / 2 + 0.05, (h - 0.05) / 2, 0);
+      const legR = new THREE.Mesh(legGeo, legMat);
+      legR.position.set(w / 2 - 0.05, (h - 0.05) / 2, 0);
+      g.add(legL, legR);
+      return g;
+    }
+
+    function createChair(hex = 0x0F2537) {
+      const g = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color: hex, roughness: 0.5 });
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.5), mat);
+      seat.position.y = 0.46;
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.52, 0.06), mat);
+      back.position.set(0, 0.75, -0.22);
+      const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.44, 8), steelMat);
+      ped.position.y = 0.22;
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.03, 12), steelMat);
+      base.position.y = 0.02;
+      g.add(seat, back, ped, base);
+      return g;
+    }
+
+    // 1. RUANG KERJA DIREKTUR & WAKIL DIREKTUR PT MMG
+    // Lokasi: Kantor Dekat Kamar Mandi (Ukuran Presisi: Lebar 1.79m, Panjang 2.76m, Tinggi 2.6m)
+    // Koordinat X: 5.31 s/d 7.10, Z: 6.84 s/d 9.60
+
+    // Meja Direktur Utama: 1.3 (P) x 0.65 (L) x 0.75 (T) Kayu Walnut Gelap
+    const dirDesk = createDesk(1.3, 0.65, 0.75, 0x582508, 0x0F2537);
+    dirDesk.position.set(6.2, 0, 7.45);
+    scene.add(dirDesk);
+    const dirChair = createChair(0x0F2537);
+    dirChair.position.set(6.2, 0, 7.1);
+    scene.add(dirChair);
+
+    // Laptop Direktur & Plakat Nama Direktur Utama
+    const dirLaptop = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.02, 0.24), steelMat);
+    dirLaptop.position.set(6.2, 0.77, 7.45);
+    scene.add(dirLaptop);
+    const dirNamePlate = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.05, 0.06), tealMat);
+    dirNamePlate.position.set(6.6, 0.78, 7.45);
+    scene.add(dirNamePlate);
+
+    // Meja Wakil Direktur: 1.1 (P) x 0.55 (L) x 0.75 (T)
+    const wadirDesk = createDesk(1.1, 0.55, 0.75, 0x78350F, 0x1E293B);
+    wadirDesk.position.set(6.2, 0, 8.85);
+    scene.add(wadirDesk);
+    const wadirChair = createChair(0x16354D);
+    wadirChair.position.set(6.2, 0, 9.2);
+    wadirChair.rotation.y = Math.PI;
+    scene.add(wadirChair);
+
+    // Lemari Arsip Berkas Legalitas PT MMG (Akta, NIB, Izin Edar)
+    const dirCabinet = new THREE.Mesh(
+      new THREE.BoxGeometry(0.35, 1.8, 0.75),
+      new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.6, roughness: 0.4 })
+    );
+    dirCabinet.position.set(5.55, 0.9, 8.15);
+    dirCabinet.castShadow = true;
+    scene.add(dirCabinet);
+
+    // Unit AC Split Ruang Direksi (Y = 2.4m)
+    const dirAC = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.28, 0.2), new THREE.MeshStandardMaterial({ color: 0xFFFFFF }));
+    dirAC.position.set(6.2, 2.4, 6.95);
+    scene.add(dirAC);
+
+    // 2. RUANG KERJA PJT & AREA BUFFER STOK ALKES KECIL (EKS-RUANG KONSELING DEPAN DETIK 53)
+    // Lokasi: Ruang Depan Sisi Timur (X: 10.0 -> 16.5, Z: 2.0 -> 5.5)
+
+    // Meja Kerja PJT (Penanggung Jawab Teknis): 1.4 (P) x 0.7 (L) x 0.75 (T)
+    const pjtDesk = createDesk(1.4, 0.7, 0.75, 0x008080, 0x1E293B);
+    pjtDesk.position.set(14.8, 0, 3.6);
+    pjtDesk.rotation.y = -Math.PI / 2;
+    scene.add(pjtDesk);
+
+    const pjtChair = createChair(0x008080);
+    pjtChair.position.set(15.45, 0, 3.6);
+    pjtChair.rotation.y = -Math.PI / 2;
+    scene.add(pjtChair);
+
+    // Telepon Fixed Line di atas Meja PJT (Wajib Audit MMG-03)
+    const fixedPhone = new THREE.Mesh(
+      new THREE.BoxGeometry(0.24, 0.1, 0.2),
+      new THREE.MeshStandardMaterial({ color: 0x0F172A })
+    );
+    fixedPhone.position.set(14.8, 0.8, 3.25);
+    scene.add(fixedPhone);
+
+    // Kursi Tamu / Konsultasi Medis & Auditor Dinkes di Depan Meja PJT
+    const guestChair1 = createChair(0x16354D);
+    guestChair1.position.set(13.9, 0, 3.3);
+    guestChair1.rotation.y = Math.PI / 2;
+    scene.add(guestChair1);
+
+    const guestChair2 = createChair(0x16354D);
+    guestChair2.position.set(13.9, 0, 3.9);
+    guestChair2.rotation.y = Math.PI / 2;
+    scene.add(guestChair2);
+
+    // Meja Rapat Kecil & Cek Sampel Instrumen Bushido: 1.8 (P) x 0.9 (L) x 0.75 (T)
+    const sampleTable = createDesk(1.8, 0.9, 0.75, 0xF8FAFC, 0x334155);
+    sampleTable.position.set(11.2, 0, 3.6);
+    scene.add(sampleTable);
+    // Surgical Instrument Tray Stainless Steel
+    const sampleTray = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.05, 0.42), steelMat);
+    sampleTray.position.set(11.2, 0.78, 3.6);
+    scene.add(sampleTray);
+    for (let cx of [-0.55, 0.55]) {
+      const cTop = createChair(0x1E293B);
+      cTop.position.set(11.2 + cx, 0, 2.85);
+      scene.add(cTop);
+      const cBtm = createChair(0x1E293B);
+      cBtm.position.set(11.2 + cx, 0, 4.35);
+      cBtm.rotation.y = Math.PI;
+      scene.add(cBtm);
+    }
+
+    // Lemari Buffer Kaca / Display Sampel Alkes Kecil (Steril)
+    const sampleCab = new THREE.Mesh(
+      new THREE.BoxGeometry(1.4, 1.9, 0.42),
+      new THREE.MeshStandardMaterial({ color: 0x0F2537, metalness: 0.5, roughness: 0.3 })
+    );
+    sampleCab.position.set(16.5, 0.95, 2.0);
+    scene.add(sampleCab);
+
+    // 4. Meja Kerja QC & Labeling AKL: 1.5 (P) x 0.7 (L) x 0.8 (T) di Area Penerimaan Barang
+    const qcDesk = createDesk(1.5, 0.7, 0.8, 0xE2E8F0, 0x0284C7);
+    qcDesk.position.set(10.8, 0, 10.45);
+    scene.add(qcDesk);
+    // AKL Sticker Printer & Box on QC Desk
+    const aklPrinter = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.22, 0.28), navyMat);
+    aklPrinter.position.set(10.4, 0.91, 10.45);
+    scene.add(aklPrinter);
+
+    // 5. Rak Besi Gudang (Heavy-Duty Shelving): 2.0 (P) x 0.6 (L) x 2.0 (T) terdiri dari 5 ambalan tingkat
+    // Ditempatkan berjajar di sepanjang dinding belakang Gudang 15m dengan jarak aman 30cm dari dinding (Z = 12.6 - 0.3 - 0.3 = 12.0)
+    function createHeavyDutyRack(x, z) {
+      const rack = new THREE.Group();
+      const W = 2.0, D = 0.6, H = 2.0;
+
+      // 4 Vertical Steel Posts
+      const postGeo = new THREE.BoxGeometry(0.05, H, 0.05);
+      for (let px of [-W / 2 + 0.025, W / 2 - 0.025]) {
+        for (let pz of [-D / 2 + 0.025, D / 2 - 0.025]) {
+          const post = new THREE.Mesh(postGeo, steelMat);
+          post.position.set(px, H / 2, pz);
+          post.castShadow = true;
+          rack.add(post);
+        }
+      }
+
+      // 5 Tier Shelves + Bushido Surgical Instrument Boxes
+      const shelfGeo = new THREE.BoxGeometry(W, 0.035, D);
+      const boxColors = [0x0284C7, 0x0F2537, 0x008080, 0xD97706];
+      for (let t = 0; t < 5; t++) {
+        const yPos = 0.18 + t * 0.44;
+        const shelf = new THREE.Mesh(shelfGeo, steelMat);
+        shelf.position.y = yPos;
+        rack.add(shelf);
+
+        if (t < 4) {
+          for (let b = 0; b < 3; b++) {
+            const box = new THREE.Mesh(
+              new THREE.BoxGeometry(0.48, 0.28, 0.42),
+              new THREE.MeshStandardMaterial({ color: boxColors[(t + b) % boxColors.length], roughness: 0.5 })
+            );
+            box.position.set(-0.6 + b * 0.6, yPos + 0.16, 0);
+            box.castShadow = true;
+            rack.add(box);
+          }
+        }
+      }
+
+      rack.position.set(x, 0, z);
+      scene.add(rack);
+      return rack;
+    }
+
+    // Barisan 4 Rak Besi Heavy-Duty di Gudang 15m (X = 9.5, 11.8, 14.1, 16.4; Z = 12.0 [30cm dari tembok Z=12.6])
+    const rackPositionsX = [9.5, 11.8, 14.1, 16.4];
+    rackPositionsX.forEach((rx) => createHeavyDutyRack(rx, 12.0));
+
+    // Rak Eksisting di Sudut Kiri Gudang (Sesuai IMG_9191_04 "Panci Masak 40cm" -> Diupgrade menjadi Rak Alkes #5)
+    createHeavyDutyRack(6.2, 12.0);
+
+    // 6. Palet Plastik Gudang: 1.2 (P) x 1.0 (L) x 0.15 (T) warna biru/hitam untuk kargo instrumen
+    function createPlasticPallet(x, z, colorHex = 0x0284C7) {
+      const g = new THREE.Group();
+      const base = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 0.15, 1.0),
+        new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.6 })
+      );
+      base.position.y = 0.075;
+      base.castShadow = true;
+      g.add(base);
+
+      // Master Carton Cargo Boxes on Pallet
+      const cartonMat = new THREE.MeshStandardMaterial({ color: 0xD97706, roughness: 0.7 });
+      for (let cx of [-0.28, 0.28]) {
+        for (let cz of [-0.22, 0.22]) {
+          const carton = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.42, 0.4), cartonMat);
+          carton.position.set(cx, 0.15 + 0.21, cz);
+          carton.castShadow = true;
+          g.add(carton);
+        }
+      }
+      g.position.set(x, 0, z);
+      scene.add(g);
+    }
+
+    createPlasticPallet(13.2, 10.35, 0x0284C7);
+    createPlasticPallet(14.8, 10.35, 0x1E293B);
+
+    // 7. Lemari Karantina Terkunci (Pengganti Ruang Karantina): 0.9 (P) x 0.45 (L) x 1.85 (T) warna merah
+    // Ditempatkan di sudut lekuk barat Gudang (X = 3.65, Z = 11.95)
+    const quarantineCabinet = new THREE.Mesh(
+      new THREE.BoxGeometry(0.9, 1.85, 0.45),
+      redCabinetMat
+    );
+    quarantineCabinet.position.set(3.65, 0.925, 12.1);
+    quarantineCabinet.castShadow = true;
+    scene.add(quarantineCabinet);
+
+    // Sofa Hijau Eksisting (Seen in IMG_9179 & IMG_9191_08 - Digeser rapi ke sisi timur ruang gudang X=17.2)
+    const greenSofa = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.78, 1.95), greenSofaMat);
+    greenSofa.position.set(17.4, 0.39, 10.75);
+    scene.add(greenSofa);
+
+    // ============================================================================
+    // 10. MARKA LANTAI GUDANG CDAKB (THREE.PlaneGeometry Y = 0.014, Lebar 5-6cm)
+    // ============================================================================
+    // 1. Biru (#0284C7): Area Penerimaan Barang & Penempelan Stiker AKL (Sekitar bukaan & meja QC + palet)
+    addFloorTapeRect(9.8, 9.75, 5.8, 1.25, 0x0284C7);
+
+    // 2. Kuning (#EAB308): Batas aman barisan Rak Penyimpanan (berjarak 30cm dari dinding Z=12.6)
+    addFloorTapeRect(5.0, 11.55, 12.6, 0.95, 0xEAB308);
+
+    // 3. Merah (#DC2626): Sudut Area Karantina / Barang Reject (Sudut Barat Gudang X: 3.15 -> 4.55, Z: 11.4 -> 12.45)
+    addFloorTapeRect(3.15, 11.4, 1.4, 1.05, 0xDC2626);
+
+    // 4. Hijau (#16A34A): Jalur jalan kaki & arah panah alur barang (Flow of Goods)
+    addFloorTape(7.55, 6.2, 7.55, 11.2, 0x16A34A, 0.07);
+    addFloorTape(4.6, 11.2, 16.8, 11.2, 0x16A34A, 0.07);
+    addFlowArrow(7.55, 7.5, -Math.PI / 2, 0x16A34A);
+    addFlowArrow(7.55, 9.2, -Math.PI / 2, 0x16A34A);
+    addFlowArrow(9.2, 11.2, 0, 0x16A34A);
+    addFlowArrow(12.5, 11.2, 0, 0x16A34A);
+    addFlowArrow(15.5, 11.2, 0, 0x16A34A);
+
+    // ============================================================================
+    // 11. 4 TITIK SENSOR & ALAT WAJIB AUDIT KEMENKES + PERANGKAP TIKUS
+    // ============================================================================
+    // 1. Unit AC Split Gudang (Y = 2.6m) & AC Ruang Depan
+    const acGudang = new THREE.Mesh(
+      new THREE.BoxGeometry(0.88, 0.28, 0.22),
+      new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.2 })
+    );
+    acGudang.position.set(12.8, 2.6, 12.42);
+    scene.add(acGudang);
+
+    const acDepan = acGudang.clone();
+    acDepan.position.set(12.0, 2.6, 1.75);
+    scene.add(acDepan);
+
+    // 2. Thermohygrometer Digital Terkalibrasi (Y = 1.5m di dinding area rak)
+    const thermoMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.18, 0.22, 0.05),
+      new THREE.MeshStandardMaterial({ color: 0x0284C7 })
+    );
+    thermoMesh.position.set(11.8, 1.5, 12.48);
+    scene.add(thermoMesh);
+
+    // 3. Tabung APAR Merah (Y = 1.2m dekat pintu masuk utama & pintu gudang)
+    function createAPAR(x, y, z) {
+      const g = new THREE.Group();
+      const cyl = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.09, 0.09, 0.52, 16),
+        new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.3, metalness: 0.3 })
+      );
+      const nozzle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03, 0.03, 0.12, 8),
+        darkFrameMat
+      );
+      nozzle.position.y = 0.3;
+      g.add(cyl, nozzle);
+      g.position.set(x, y, z);
+      scene.add(g);
+    }
+    createAPAR(8.35, 1.2, 1.75); // Dekat pintu masuk depan
+    createAPAR(8.35, 1.2, 9.48); // Dekat pintu masuk gudang
+
+    // 4. Lampu Insect Killer UV (Y = 2.4m di atas pintu gudang)
+    const insectKiller = new THREE.Mesh(
+      new THREE.BoxGeometry(0.55, 0.24, 0.14),
+      new THREE.MeshStandardMaterial({ color: 0x6366F1, emissive: 0x4F46E5, emissiveIntensity: 0.85 })
+    );
+    insectKiller.position.set(7.55, 2.4, 9.72);
+    scene.add(insectKiller);
+
+    // 5. Perangkap Tikus (Pest Control Trap) di sudut lantai gudang (MMG-03)
+    const pestTrap1 = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, 0.18), darkFrameMat);
+    pestTrap1.position.set(4.8, 0.06, 12.35);
+    scene.add(pestTrap1);
+    const pestTrap2 = pestTrap1.clone();
+    pestTrap2.position.set(17.6, 0.06, 12.35);
+    scene.add(pestTrap2);
+
+    // ============================================================================
+    // 12. CSS2D FLOATING LABELS (DIMENSIONS, ZONES & AUDIT SENSORS)
+    // ============================================================================
+    // Dimension Labels (Sesuai Ukuran Pasti User & Foto)
+    addCSSLabel('↔ LEBAR DEPAN BANGUNAN: 22.2 m', 11.1, 0.35, -0.3, 'label-dim');
+    addCSSLabel('↕ HALAMAN PARKIR DEPAN: 9.3 m (IMG_9178)', 11.1, 0.25, -4.65, 'label-dim');
+    addCSSLabel('↔ PANJANG GUDANG (KITCHEN): 15.0 m', 10.5, 3.15, 12.6, 'label-dim');
+    addCSSLabel('↕ LEBAR GUDANG: 3.0 m | TINGGI: 3.0 m', 18.0, 1.8, 11.1, 'label-dim');
+    addCSSLabel('KANTOR DEKAT K. MANDI: L 1.79m × P 2.76m × T 2.6m', 6.2, 2.75, 8.2, 'label-dim');
+
+    // Zone & Furniture Labels
+    addCSSLabel('Ruang Direktur & Wadir PT MMG (Dekat Kamar Mandi)', 6.2, 1.45, 7.8, 'label-zone');
+    addCSSLabel('Ruang PJT & Buffer Alkes Kecil (Eks-Konseling)', 14.8, 1.45, 3.6, 'label-zone');
+    addCSSLabel('Meja Rapat Kecil & Cek Sampel Bedah Bushido', 11.2, 1.2, 3.6, 'label-zone');
+    addCSSLabel('Kamar Mandi & Wastafel', 4.1, 1.5, 8.2, 'label-zone');
+    addCSSLabel('Zona D (Lantai Coklat): Penerimaan, QC & Labeling AKL', 10.8, 1.3, 10.45, 'label-zone');
+    addCSSLabel('Kitchen Sink Eksisting Gudang', 9.0, 1.3, 10.0, 'label-zone');
+    addCSSLabel('5 Unit Rak Besi Heavy-Duty (2.0m × 0.6m × 2.0m) — Marka Kuning', 12.9, 2.25, 12.0, 'label-zone');
+    addCSSLabel('Palet Plastik Biru/Hitam (1.2m × 1.0m × 0.15m)', 14.0, 0.85, 10.35, 'label-zone');
+    addCSSLabel('Lemari Karantina Merah Terkunci (0.9m × 0.45m × 1.85m)', 3.65, 2.1, 12.1, 'label-zone');
+
+    // 4 Mandatory Audit Sensor Pins
+    addCSSLabel('❄️ AC Split Gudang (Y=2.6m | Target: 15–25°C)', 12.8, 2.9, 12.42, 'label-sensor sensor-teal');
+    addCSSLabel('🌡️ Thermohygrometer Terkalibrasi (Y=1.5m)', 11.8, 1.75, 12.48, 'label-sensor sensor-teal');
+    addCSSLabel('🧯 Tabung APAR Merah (Y=1.2m)', 8.35, 1.55, 1.75, 'label-sensor');
+    addCSSLabel('⚡ Lampu Insect Killer UV (Y=2.4m)', 7.55, 2.65, 9.72, 'label-sensor sensor-teal');
+    addCSSLabel('🪤 Perangkap Tikus (Pest Control)', 4.8, 0.35, 12.35, 'label-sensor');
+
+    // ============================================================================
+    // 13. STREET-VIEW WAYPOINTS & GSAP CAMERA TOUR (TAHAP D LANGKAH 3)
+    // ============================================================================
+    const waypoints = [
+      {
+        id: 0,
+        name: 'Bird-Eye Blueprint',
+        pos: { x: 11.1, y: 21.5, z: -6.5 },
+        target: { x: 11.1, y: 0.5, z: 6.2 }
+      },
+      {
+        id: 1,
+        name: 'Pintu Masuk & Fasad Depan (22.2m)',
+        pos: { x: 11.1, y: 1.65, z: -6.2 },
+        target: { x: 11.1, y: 1.60, z: 2.5 }
+      },
+      {
+        id: 2,
+        name: 'Ruang Direktur & Wadir (Dekat Kamar Mandi)',
+        pos: { x: 6.2, y: 1.65, z: 6.9 },
+        target: { x: 6.2, y: 1.25, z: 8.4 }
+      },
+      {
+        id: 3,
+        name: 'Ruang PJT & Buffer Stok Alkes (Eks-Konseling)',
+        pos: { x: 9.2, y: 1.65, z: 2.4 },
+        target: { x: 13.8, y: 1.55, z: 3.8 }
+      },
+      {
+        id: 4,
+        name: 'Zona Penerimaan & Labeling AKL',
+        pos: { x: 7.8, y: 1.65, z: 10.8 },
+        target: { x: 11.2, y: 1.25, z: 10.3 }
+      },
+      {
+        id: 5,
+        name: 'Lorong Rak Gudang Penyimpanan (15m × 3m)',
+        pos: { x: 8.2, y: 1.65, z: 11.1 },
+        target: { x: 16.5, y: 1.45, z: 11.8 }
+      },
+      {
+        id: 6,
+        name: 'Sudut Lemari Karantina & Keamanan',
+        pos: { x: 6.8, y: 1.65, z: 11.0 },
+        target: { x: 3.6, y: 1.25, z: 12.1 }
+      }
+    ];
+
+    let currentWaypoint = 0;
+    let isAutoPlaying = false;
+    let autoPlayTimer = null;
+
+    const wpButtons = document.querySelectorAll('.waypoint-btn');
+
+    function goToWaypoint(index, onCompleteCallback = null) {
+      currentWaypoint = index;
+      const wp = waypoints[index];
+
+      wpButtons.forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === index);
+      });
+
+      gsap.killTweensOf(camera.position);
+      gsap.killTweensOf(controls.target);
+
+      gsap.to(camera.position, {
+        x: wp.pos.x,
+        y: wp.pos.y,
+        z: wp.pos.z,
+        duration: 1.8,
+        ease: 'power2.inOut'
+      });
+
+      gsap.to(controls.target, {
+        x: wp.target.x,
+        y: wp.target.y,
+        z: wp.target.z,
+        duration: 1.8,
+        ease: 'power2.inOut',
+        onUpdate: () => controls.update(),
+        onComplete: () => {
+          if (onCompleteCallback) onCompleteCallback();
+        }
+      });
+    }
+
+    wpButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        stopAutoPlay();
+        const idx = parseInt(btn.getAttribute('data-wp'), 10);
+        goToWaypoint(idx);
+      });
+    });
+
+    // Auto-Play Room Tour Logic (Pos 1 -> Pos 6 with 3s pause)
+    const btnAutoplay = document.getElementById('btn-autoplay');
+    const autoplayIcon = document.getElementById('autoplay-icon');
+    const autoplayText = document.getElementById('autoplay-text');
+
+    function stopAutoPlay() {
+      isAutoPlaying = false;
+      if (autoPlayTimer) clearTimeout(autoPlayTimer);
+      btnAutoplay.classList.remove('playing');
+      autoplayIcon.textContent = '▶';
+      autoplayText.textContent = 'Auto-Play Room Tour (Pos 1–6)';
+      if (dockAutoplayIcon) dockAutoplayIcon.textContent = '▶';
+      dockBtnAutoplay?.classList.remove('active');
+    }
+
+    function runAutoPlayStep(stepIdx) {
+      if (!isAutoPlaying) return;
+      goToWaypoint(stepIdx, () => {
+        if (!isAutoPlaying) return;
+        autoPlayTimer = setTimeout(() => {
+          const nextIdx = stepIdx < 6 ? stepIdx + 1 : 1;
+          runAutoPlayStep(nextIdx);
+        }, 3000);
+      });
+    }
+
+    btnAutoplay.addEventListener('click', () => {
+      if (isAutoPlaying) {
+        stopAutoPlay();
+      } else {
+        isAutoPlaying = true;
+        btnAutoplay.classList.add('playing');
+        autoplayIcon.textContent = '⏹';
+        autoplayText.textContent = 'Hentikan Auto-Play Tour';
+        const startIdx = (currentWaypoint >= 1 && currentWaypoint < 6) ? currentWaypoint : 1;
+        runAutoPlayStep(startIdx);
+      }
+    });
+
+
+    // ============================================================================
+    // ARCHITECTURAL TIKTOK-STYLE PINS & DOLLHOUSE CUTAWAY (@griya.studio STYLE)
+    // ============================================================================
+    // (allWallMeshes declared above)
+    const pinsGroup = new THREE.Group();
+    scene.add(pinsGroup);
+
+    const cadDimensionsGroup = new THREE.Group();
+    scene.add(cadDimensionsGroup);
+
+    // Interactive 3D Room Pins
+    function addRoomPin(num, name, x, y, z, wpId) {
+      const div = document.createElement('div');
+      div.className = 'architectural-pin';
+      div.innerHTML = `
+        <div class="pin-circle">${num}</div>
+        <div class="pin-card">
+          <span class="pin-num">ROOM #0${num}</span>
+          <span class="pin-title">${name}</span>
+        </div>
+      `;
+      div.onclick = (e) => {
+        e.stopPropagation();
+        goToWaypoint(wpId);
+      };
+      const pinObj = new CSS2DObject(div);
+      pinObj.position.set(x, y, z);
+      pinsGroup.add(pinObj);
+      return pinObj;
+    }
+
+    // Add 6 Master Room Pins
+    addRoomPin(1, 'Fasad Depan & Parkir Kargo', 11.1, 3.4, -1.2, 1);
+    addRoomPin(2, 'Ruang Direktur & Wadir PT MMG', 6.2, 2.7, 7.8, 2);
+    addRoomPin(3, 'Ruang PJT & Buffer Alkes Kecil', 14.8, 2.8, 3.6, 3);
+    addRoomPin(4, 'Zona D: QC & Labeling AKL', 10.8, 2.6, 10.45, 4);
+    addRoomPin(5, 'Gudang Utama CDAKB (15m)', 13.5, 3.0, 11.2, 5);
+    addRoomPin(6, 'Sudut Karantina & 4 Titik Audit', 3.65, 2.6, 12.1, 6);
+
+    // CAD Dimension Lines with Arrowheads in 3D Space
+    function addCadDimensionLine(p1, p2, text, textOffset = { x: 0, y: 0.35, z: 0 }) {
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x0284C7, linewidth: 2 });
+      const points = [
+        new THREE.Vector3(p1.x, p1.y, p1.z),
+        new THREE.Vector3(p2.x, p2.y, p2.z)
+      ];
+      const geom = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(geom, lineMat);
+      cadDimensionsGroup.add(line);
+
+      // Dimension Tick Ends
+      const tickMat = new THREE.MeshBasicMaterial({ color: 0x38BDF8 });
+      const t1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.35, 0.06), tickMat);
+      t1.position.set(p1.x, p1.y, p1.z);
+      const t2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.35, 0.06), tickMat);
+      t2.position.set(p2.x, p2.y, p2.z);
+      cadDimensionsGroup.add(t1, t2);
+
+      // Floating CAD Tag
+      const div = document.createElement('div');
+      div.className = 'cad-dimension-tag';
+      div.textContent = text;
+      const tagObj = new CSS2DObject(div);
+      tagObj.position.set(
+        (p1.x + p2.x) / 2 + textOffset.x,
+        (p1.y + p2.y) / 2 + textOffset.y,
+        (p1.z + p2.z) / 2 + textOffset.z
+      );
+      cadDimensionsGroup.add(tagObj);
+    }
+
+    // 5 Architectural Dimension Annotations
+    addCadDimensionLine({ x: 0.0, y: 0.25, z: -0.6 }, { x: 22.2, y: 0.25, z: -0.6 }, '◀―― LEBAR FASAD DEPAN: 22.20 M ――▶', { x: 0, y: 0.3, z: 0 });
+    addCadDimensionLine({ x: -0.6, y: 0.2, z: -9.3 }, { x: -0.6, y: 0.2, z: 0.0 }, '◀―― PARKIR: 9.30 M ――▶', { x: -0.5, y: 0.3, z: 0 });
+    addCadDimensionLine({ x: 3.0, y: 3.2, z: 12.8 }, { x: 18.0, y: 3.2, z: 12.8 }, '◀―― PANJANG GUDANG KITCHEN: 15.00 M ――▶', { x: 0, y: 0.35, z: 0 });
+    addCadDimensionLine({ x: 18.25, y: 1.6, z: 9.6 }, { x: 18.25, y: 1.6, z: 12.6 }, '◀―― LEBAR: 3.0 M ――▶', { x: 0.6, y: 0.2, z: 0 });
+    addCadDimensionLine({ x: 5.31, y: 2.65, z: 6.6 }, { x: 7.10, y: 2.65, z: 6.6 }, '◀―― RUANG DIREKTUR: 1.79 M ――▶', { x: 0, y: 0.25, z: 0 });
+
+    // Dollhouse Section Cut State (Cut walls to 1.35m height)
+    let isDollhouse = false;
+    function setDollhouseMode(active) {
+      isDollhouse = active;
+      const targetHeight = active ? 1.35 : 3.0;
+
+      allWallMeshes.forEach((mesh) => {
+        if (!mesh.userData.fixed) {
+          const origH = mesh.userData.origH || 3.0;
+          const origYOffset = mesh.userData.yOffset || 0;
+          const newH = active ? Math.min(origH, 1.35) : origH;
+          const scaleY = newH / origH;
+          const newY = origYOffset + newH / 2;
+
+          gsap.to(mesh.scale, { y: scaleY, duration: 0.7, ease: 'power2.inOut' });
+          gsap.to(mesh.position, { y: newY, duration: 0.7, ease: 'power2.inOut' });
+        }
+      });
+
+      // Update UI button state
+      const btnDollhouse = document.getElementById('btn-toggle-dollhouse');
+      const textDollhouse = document.getElementById('dollhouse-text');
+      const iconDollhouse = document.getElementById('dollhouse-icon');
+      if (btnDollhouse) {
+        btnDollhouse.classList.toggle('active', active);
+        if (iconDollhouse) iconDollhouse.textContent = active ? '🏢' : '🏠';
+        if (textDollhouse) textDollhouse.textContent = active ? 'Mode Penuh (3.0m)' : 'Mode Maket (Potongan)';
+      }
+      const dockBtnDollhouse = document.getElementById('dock-btn-dollhouse');
+      dockBtnDollhouse?.classList.toggle('active', active);
+
+      // If active, position camera to isometric architectural angle if in bird-eye
+      if (active && currentWaypoint === 0) {
+        gsap.to(camera.position, { x: 11.1, y: 16.5, z: -3.5, duration: 1.2, ease: 'power2.inOut' });
+        gsap.to(controls.target, { x: 11.1, y: 1.0, z: 6.5, duration: 1.2, ease: 'power2.inOut' });
+      }
+    }
+
+    document.getElementById('btn-toggle-dollhouse')?.addEventListener('click', () => {
+      setDollhouseMode(!isDollhouse);
+    });
+    document.getElementById('dock-btn-dollhouse')?.addEventListener('click', () => {
+      setDollhouseMode(!isDollhouse);
+    });
+
+    // Share Link Handler (Copies current URL or GitHub URL)
+    function handleShare() {
+      const shareUrl = window.location.href.includes('localhost') 
+        ? 'https://sveroust.github.io/maziya-3d-office/'
+        : window.location.href;
+
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showShareToast('✓ Tautan Berhasil Disalin! Siap dibuka di Laptop & HP.');
+      }).catch(() => {
+        // Fallback prompt
+        prompt('Salin tautan ini untuk dibagikan:', shareUrl);
+      });
+    }
+
+    function showShareToast(msg) {
+      const toast = document.getElementById('share-toast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    document.getElementById('btn-share-link')?.addEventListener('click', handleShare);
+    document.getElementById('dock-btn-share')?.addEventListener('click', handleShare);
+
+    // ============================================================================
+    // DRAWER & PANEL TOGGLES (RESPONSIVE LAPTOP & MOBILE)
+    // ============================================================================
+    const navPanel = document.querySelector('.nav-panel');
+    const specCard = document.querySelector('.spec-card');
+    const drawerBackdrop = document.getElementById('drawer-backdrop');
+    const btnToggleNav = document.getElementById('btn-toggle-nav');
+    const btnToggleSpec = document.getElementById('btn-toggle-spec');
+    const btnCloseNav = document.getElementById('btn-close-nav');
+    const btnCloseSpec = document.getElementById('btn-close-spec');
+
+    // Desktop & Mobile Toggle Functions
+    function isMobile() {
+      return window.innerWidth <= 768;
+    }
+
+    function toggleNavPanel() {
+      if (isMobile()) {
+        const isOpen = navPanel.classList.contains('mobile-open');
+        closeAllDrawers();
+        if (!isOpen) {
+          navPanel.classList.add('mobile-open');
+          drawerBackdrop.classList.add('active');
+          document.getElementById('dock-btn-nav')?.classList.add('active');
+        }
+      } else {
+        navPanel.classList.toggle('collapsed');
+        btnToggleNav?.classList.toggle('active', !navPanel.classList.contains('collapsed'));
+      }
+    }
+
+    function toggleSpecCard() {
+      if (isMobile()) {
+        const isOpen = specCard.classList.contains('mobile-open');
+        closeAllDrawers();
+        if (!isOpen) {
+          specCard.classList.add('mobile-open');
+          drawerBackdrop.classList.add('active');
+          document.getElementById('dock-btn-spec')?.classList.add('active');
+        }
+      } else {
+        specCard.classList.toggle('collapsed');
+        btnToggleSpec?.classList.toggle('active', !specCard.classList.contains('collapsed'));
+      }
+    }
+
+    function closeAllDrawers() {
+      navPanel.classList.remove('mobile-open');
+      specCard.classList.remove('mobile-open');
+      drawerBackdrop.classList.remove('active');
+      document.getElementById('dock-btn-nav')?.classList.remove('active');
+      document.getElementById('dock-btn-spec')?.classList.remove('active');
+    }
+
+    btnToggleNav?.addEventListener('click', toggleNavPanel);
+    btnToggleSpec?.addEventListener('click', toggleSpecCard);
+    btnCloseNav?.addEventListener('click', () => {
+      if (isMobile()) closeAllDrawers();
+      else navPanel.classList.add('collapsed');
+      btnToggleNav?.classList.remove('active');
+    });
+    btnCloseSpec?.addEventListener('click', () => {
+      if (isMobile()) closeAllDrawers();
+      else specCard.classList.add('collapsed');
+      btnToggleSpec?.classList.remove('active');
+    });
+    drawerBackdrop?.addEventListener('click', closeAllDrawers);
+
+    // Mobile Bottom Dock Wiring
+    document.getElementById('dock-btn-nav')?.addEventListener('click', toggleNavPanel);
+    document.getElementById('dock-btn-spec')?.addEventListener('click', toggleSpecCard);
+    document.getElementById('dock-btn-labels')?.addEventListener('click', () => {
+      btnToggleLabels.click();
+      document.getElementById('dock-btn-labels').classList.toggle('active', labelsVisible);
+    });
+
+    const dockBtnAutoplay = document.getElementById('dock-btn-autoplay');
+    const dockAutoplayIcon = document.getElementById('dock-autoplay-icon');
+    dockBtnAutoplay?.addEventListener('click', () => {
+      btnAutoplay.click();
+    });
+
+    // Auto-close nav on mobile when waypoint selected
+    const origGoToWaypoint = goToWaypoint;
+    window.goToWaypoint = function(idx, cb) {
+      if (isMobile()) closeAllDrawers();
+      origGoToWaypoint(idx, cb);
+    };
+
+    // VIRTUAL TOUCH D-PAD LOGIC
+    const virtualDpad = document.getElementById('virtual-dpad');
+    const dockBtnDpad = document.getElementById('dock-btn-dpad');
+    dockBtnDpad?.addEventListener('click', () => {
+      virtualDpad.classList.toggle('visible');
+      dockBtnDpad.classList.toggle('active', virtualDpad.classList.contains('visible'));
+    });
+
+    function setupDpadButton(btnId, keyCode) {
+      const el = document.getElementById(btnId);
+      if (!el) return;
+      const start = (e) => {
+        e.preventDefault();
+        keysPressed[keyCode] = true;
+      };
+      const end = (e) => {
+        e.preventDefault();
+        keysPressed[keyCode] = false;
+      };
+      el.addEventListener('touchstart', start, { passive: false });
+      el.addEventListener('touchend', end);
+      el.addEventListener('mousedown', start);
+      el.addEventListener('mouseup', end);
+      el.addEventListener('mouseleave', end);
+    }
+    setupDpadButton('dpad-up', 'KeyW');
+    setupDpadButton('dpad-down', 'KeyS');
+    setupDpadButton('dpad-left', 'KeyA');
+    setupDpadButton('dpad-right', 'KeyD');
+
+    // ============================================================================
+    // 14. KEYBOARD WALK CONTROLS (WASD + ARROW KEYS) & UI TOGGLES
+    // ============================================================================
+    const keysPressed = {};
+    window.addEventListener('keydown', (e) => {
+      keysPressed[e.code] = true;
+    });
+    window.addEventListener('keyup', (e) => {
+      keysPressed[e.code] = false;
+    });
+
+    function processKeyboardMovement() {
+      const moveSpeed = 0.12;
+      const forward = new THREE.Vector3();
+      camera.getWorldDirection(forward);
+      forward.y = 0;
+      forward.normalize();
+
+      const right = new THREE.Vector3();
+      right.crossVectors(forward, camera.up).normalize();
+
+      const delta = new THREE.Vector3();
+      if (keysPressed['KeyW'] || keysPressed['ArrowUp']) delta.addScaledVector(forward, moveSpeed);
+      if (keysPressed['KeyS'] || keysPressed['ArrowDown']) delta.addScaledVector(forward, -moveSpeed);
+      if (keysPressed['KeyD'] || keysPressed['ArrowRight']) delta.addScaledVector(right, moveSpeed);
+      if (keysPressed['KeyA'] || keysPressed['ArrowLeft']) delta.addScaledVector(right, -moveSpeed);
+
+      if (delta.lengthSq() > 0) {
+        camera.position.add(delta);
+        controls.target.add(delta);
+      }
+    }
+
+    // Toggle Ukuran & Marka Button
+    let labelsVisible = true;
+    const btnToggleLabels = document.getElementById('btn-toggle-labels');
+    btnToggleLabels.addEventListener('click', () => {
+      labelsVisible = !labelsVisible;
+      labelsAndMarkingsGroup.visible = labelsVisible;
+      cadDimensionsGroup.visible = labelsVisible;
+      pinsGroup.visible = labelsVisible;
+      cssLabelsList.forEach((el) => {
+        el.style.display = labelsVisible ? '' : 'none';
+      });
+      btnToggleLabels.classList.toggle('active', labelsVisible);
+    });
+
+    // Toggle Kanopi & Fasad Luar
+    const btnToggleRoof = document.getElementById('btn-toggle-roof');
+    btnToggleRoof.addEventListener('click', () => {
+      roofAndExteriorGroup.visible = !roofAndExteriorGroup.visible;
+      btnToggleRoof.classList.toggle('active', roofAndExteriorGroup.visible);
+    });
+
+    // Modal Foto & Video Asli
+    const refModal = document.getElementById('ref-modal');
+    document.getElementById('btn-open-ref').addEventListener('click', () => {
+      refModal.classList.add('open');
+    });
+    document.getElementById('btn-close-ref').addEventListener('click', () => {
+      refModal.classList.remove('open');
+    });
+
+    // ============================================================================
+    // 15. RENDER LOOP & AUTO EXTERIOR WALL TRANSPARENCY (OPACITY 0.25)
+    // ============================================================================
+    function animate() {
+      requestAnimationFrame(animate);
+      processKeyboardMovement();
+      controls.update();
+
+      // Dynamic exterior wall transparency: semi-transparent (0.25) when viewed from above or exterior
+      const isExteriorOrHighView = camera.position.y > 4.2 || camera.position.z < 1.2 || camera.position.z > 12.8;
+      const targetOpacity = isExteriorOrHighView ? 0.25 : 0.92;
+      exteriorWallList.forEach((mat) => {
+        mat.opacity += (targetOpacity - mat.opacity) * 0.1;
+      });
+
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
+    }
+
+    animate();
+
+    
+    window.goToWaypoint = goToWaypoint;
+    window.waypoints = waypoints;
+    window.__3d_ready = true;
+    window.__camera = camera;
+    window.__controls = controls;
+    window.setCameraPose = function(pos, target) {
+      camera.position.set(pos.x, pos.y, pos.z);
+      controls.target.set(target.x, target.y, target.z);
+      controls.update();
+    };
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
