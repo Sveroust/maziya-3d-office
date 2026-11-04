@@ -1059,6 +1059,123 @@
       background: #ffffff;
     }
 
+
+    /* SPREADSHEET MODAL STYLES */
+    .sheet-modal-container {
+      max-width: 1280px;
+      width: 96vw;
+      height: 92vh;
+    }
+    .sheet-tabs-bar {
+      display: flex;
+      gap: 6px;
+      padding: 10px 16px;
+      background: #090d16;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .sheet-tab-btn {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: #94A3B8;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .sheet-tab-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #F8FAFC;
+    }
+    .sheet-tab-btn.active {
+      background: #047857;
+      border-color: #10B981;
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .sheet-modal-body {
+      padding: 16px;
+      background: #090d16;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .sheet-tab-pane {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+    .sheet-tab-pane.active {
+      display: flex;
+    }
+    .sheet-intro-box {
+      padding: 10px 16px;
+      background: rgba(4, 120, 87, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-left: 4px solid #10B981;
+      border-radius: 8px;
+      color: #E2E8F0;
+      font-size: 13px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .sheet-table-wrapper {
+      flex: 1;
+      overflow: auto;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      background: #020617;
+    }
+    .spreadsheet-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #CBD5E1;
+    }
+    .spreadsheet-table th {
+      position: sticky;
+      top: 0;
+      background: #047857;
+      color: #FFFFFF;
+      padding: 10px 8px;
+      font-weight: 700;
+      text-align: center;
+      border: 1px solid #065F46;
+      white-space: nowrap;
+      z-index: 2;
+    }
+    .spreadsheet-table td {
+      padding: 7px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+    .spreadsheet-table tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .spreadsheet-table tr:hover td {
+      background: rgba(16, 185, 129, 0.1);
+      color: #FFFFFF;
+    }
+    .cell-check-green {
+      color: #34D399 !important;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.12) !important;
+    }
+    .cell-check-amber {
+      color: #FBBF24 !important;
+      font-weight: 700;
+      background: rgba(245, 158, 11, 0.12) !important;
+    }
+    .cell-p1 {
+      color: #F87171 !important;
+      font-weight: 700;
+    }
+
 </style>
   <script type="importmap">
     {
@@ -1095,6 +1212,10 @@
     </div>
 
     <div class="top-actions">
+      <button id="btn-sheet-modal" class="btn-action" title="Buka Spreadsheet Checklist Pengadaan Low Budget &amp; Logbook CDAKB">
+        <span>📊 Spreadsheet CDAKB</span>
+      </button>
+
       <button id="btn-blueprint-modal" class="btn-action" title="Lihat Sketsa Denah 2D Arsitektur &amp; Tampak Depan Standar CAD IAI">
         <span>📐 Denah 2D CAD</span>
       </button>
@@ -1239,6 +1360,11 @@
 
   <!-- MOBILE FLOATING BOTTOM DOCK -->
   <nav id="mobile-bottom-dock">
+    <button class="dock-btn" id="dock-btn-sheet" title="Spreadsheet CDAKB">
+      <span class="dock-icon">📊</span>
+      <span>Sheet</span>
+    </button>
+
     <button class="dock-btn" id="dock-btn-blueprint" title="Sketsa Denah 2D">
       <span class="dock-icon">📐</span>
       <span>Denah</span>
@@ -2724,6 +2850,51 @@
         closeBlueprintModal();
       }
     });
+
+
+    // SPREADSHEET MODAL & TABS HANDLERS
+    const sheetModal = document.getElementById('spreadsheet-modal');
+    const btnOpenSheet = document.getElementById('btn-sheet-modal');
+    const btnDockSheet = document.getElementById('dock-btn-sheet');
+    const btnCloseSheet = document.getElementById('btn-close-sheet');
+
+    function openSheetModal() {
+      if (sheetModal) sheetModal.classList.add('open');
+    }
+    function closeSheetModal() {
+      if (sheetModal) sheetModal.classList.remove('open');
+    }
+
+    btnOpenSheet?.addEventListener('click', openSheetModal);
+    btnDockSheet?.addEventListener('click', openSheetModal);
+    btnCloseSheet?.addEventListener('click', closeSheetModal);
+
+    sheetModal?.addEventListener('click', (e) => {
+      if (e.target === sheetModal) closeSheetModal();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && sheetModal?.classList.contains('open')) {
+        closeSheetModal();
+      }
+    });
+
+    // Tab Switching inside Spreadsheet Modal
+    const tabBtns = document.querySelectorAll('.sheet-tab-btn');
+    const tabPanes = document.querySelectorAll('.sheet-tab-pane');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabPanes.forEach(p => p.classList.remove('active'));
+
+        btn.classList.add('active');
+        const targetId = btn.getAttribute('data-sheet');
+        const targetPane = document.getElementById(targetId);
+        if (targetPane) targetPane.classList.add('active');
+      });
+    });
+
 </script>
 
   <!-- BLUEPRINT MODAL -->
@@ -2746,6 +2917,208 @@
       </div>
       <div class="modal-body">
         <img src="sketsa_denah_arsitektur_pt_mmg.png" alt="Sketsa Denah 2D Arsitektur PT Maziya Medical Global" class="blueprint-img" />
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SPREADSHEET MODAL -->
+  <div id="spreadsheet-modal" class="modal-overlay">
+    <div class="modal-container sheet-modal-container">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span style="font-size:24px;">📊</span>
+          <div>
+            <div style="font-weight:700; font-size:16px; color:#F8FAFC;">Spreadsheet Checklist Pengadaan &amp; Audit CDAKB</div>
+            <div style="font-size:12px; color:#94A3B8;">PT Maziya Medical Global | Terhubung &amp; Siap Buka di Google Sheets / Excel</div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <a href="Checklist_Pengadaan_dan_Audit_CDAKB_PT_MMG.xlsx" download class="btn-download" title="Unduh File Asli Excel (.XLSX)">📥 Unduh Excel (.xlsx)</a>
+          <a href="https://drive.google.com" target="_blank" class="btn-download" style="background:rgba(16,185,129,0.25); border-color:#10B981; color:#A7F3D0;" title="Buka Google Drive untuk Buka / Edit Online">🌐 Buka di Google Drive</a>
+          <a href="https://sheets.new" target="_blank" class="btn-download btn-psd" title="Buka Lembar Kerja Google Sheets Baru">📊 Google Sheets Web</a>
+          <button id="btn-close-sheet" class="btn-close-modal" title="Tutup Modal">✕</button>
+        </div>
+      </div>
+
+      <!-- Sheet Tabs Navigation -->
+      <div class="sheet-tabs-bar">
+        <button class="sheet-tab-btn active" data-sheet="tab-sheet-1">1. Checklist Pengadaan Low Budget</button>
+        <button class="sheet-tab-btn" data-sheet="tab-sheet-2">2. Logbook Suhu &amp; Kulkas (Harian)</button>
+        <button class="sheet-tab-btn" data-sheet="tab-sheet-3">3. Sanitasi &amp; Pest Control</button>
+        <button class="sheet-tab-btn" data-sheet="tab-sheet-4">4. QC Penerimaan Alkes (Zona D)</button>
+      </div>
+
+      <div class="modal-body sheet-modal-body">
+        <div id="tab-sheet-1" class="sheet-tab-pane active">
+          <div class="sheet-intro-box">
+            <strong>📋 Ringkasan Anggaran Kas Awal:</strong> Total Item Siap Pakai di Lokasi: <strong>16 Item (Hemat Kas Rp 12 Juta+)</strong> | Kebutuhan Belanja Wajib: <strong>26 Item</strong> | Total Estimasi Belanja Baru: <span style="color:#10B981; font-weight:800; font-size:15px;">Rp 3.963.000</span>
+          </div>
+          <div class="sheet-table-wrapper"><table class="spreadsheet-table">
+<tr><td>PT MAZIYA MEDICAL GLOBAL - CHECKLIST PENGADAAN PERALATAN &amp; FURNITUR (LOW BUDGET)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>STANDAR KELAYAKAN SARANA CDAKB (PERMENKES NO. 14/2021) | TARGET ANGGARAN AWAL: ≤ Rp 4.000.000</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td></td><td>TOTAL ESTIMASI PENGADAAN BARU</td><td></td><td></td><td></td><td>TOTAL REALISASI BIAYA AKTUAL</td><td></td><td></td><td></td><td>ASET SUDAH TERSEDIA (HEMAT KAS)</td><td></td><td></td><td>ITEM PERLU BELI (ACTION PLAN)</td><td></td><td></td></tr>
+<tr><td></td><td>Target: Maks Rp 4.000.000</td><td></td><td></td><td></td><td>Pantauan Real-Time Kas</td><td></td><td></td><td></td><td>Memanfaatkan Barang di Lokasi</td><td></td><td></td><td class="cell-p1">Prioritas P1 Wajib Audit</td><td></td><td></td></tr>
+<tr><th>No.</th><th>Area / Ruangan</th><th>Kategori</th><th>Nama Item / Peralatan</th><th>Spesifikasi Teknis &amp; Trik Hemat Low-Budget</th><th>Status Aset</th><th>Qty</th><th>Satuan</th><th>Estimasi Satuan</th><th>Total Estimasi</th><th>Realisasi Beli</th><th>Prioritas</th><th>PIC</th><th>Rekomendasi Beli / Catatan</th><th>Checklist</th></tr>
+<tr><td>1</td><td>Gudang CDAKB</td><td>Furnitur</td><td>Rak Besi Siku Lubang (5 Ambalan)</td><td>Besi plat bertulang 100x40x200cm knock-down abu-abu (jarak ambalan bawah 15cm dari ubin)</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>2</td><td>Unit</td><td>Rp 375.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Logistik</td><td>Tokopedia / Shopee Seller Lokal</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>2</td><td>Gudang CDAKB</td><td>Furnitur</td><td>Rak Besi Siku Eksisting</td><td>Rak siku yang sudah ada di gudang (IMG_9189_95s.jpg), dibersihkan dan dicat ulang bila perlu</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Unit</td><td>0</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Logistik</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>3</td><td>Gudang CDAKB</td><td>Alat Gudang</td><td>Palet Plastik Bekas / Rekondisi</td><td>Ukuran 120x100x15cm, bahan plastik HDPE (bukan kayu berserabut), higienis dan anti rayap</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>3</td><td>Unit</td><td>Rp 135.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Logistik</td><td>Marketplace / Supplier Palet Second</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>4</td><td>Gudang CDAKB</td><td>Furnitur</td><td>Sofa Kulit Hijau 3-Seater</td><td>Sofa eksisting di ujung timur gudang (IMG_9179.JPG, IMG_9189_105s.jpg), area rest &amp; verifikasi</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Unit</td><td>0</td><td></td><td>0</td><td>P2 (Operasional)</td><td>Logistik</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>5</td><td>Gudang CDAKB</td><td>Sanitasi</td><td>Kitchen Sink Stainless Ganda</td><td>Wastafel cuci piring ganda stainless eksisting di pantry gudang barat (IMG_9179.JPG)</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Unit</td><td>0</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Logistik</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>6</td><td>Gudang CDAKB</td><td>Ventilasi</td><td>Exhaust Fan Dinding Maspion</td><td>Exhaust fan eksisting terpasang di dinding atas utara gudang (IMG_9181.JPG)</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Unit</td><td>0</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Logistik</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>7</td><td>Gudang CDAKB</td><td>CDAKB Wajib</td><td>Lemari Karantina Alkes (Zona Merah)</td><td>Gunakan lemari kecil/loker eksisting, pasang gembok Rp 20rb + stiker merah &#x27;KARANTINA ALKES&#x27;</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 35.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT</td><td>Gembok + Stiker Custom Online</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>8</td><td>Gudang CDAKB</td><td>CDAKB Wajib</td><td>Thermo-Hygrometer Digital Kalibrasi</td><td>Display suhu (°C) &amp; RH (%), bersertifikat kalibrasi KAN / tera resmi (wajib inspeksi dinas)</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 220.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT</td><td>Toko Alkes / Seller Sertif KAN</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>9</td><td>Gudang CDAKB</td><td>K3 &amp; Safety</td><td>Tabung APAR Powder 3 kg / 6 kg</td><td>Dry chemical powder bersertifikat Damkar, dipasang di dinding ketinggian 1.2m dekat pintu</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 190.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Logistik</td><td>Toko Safety / Pemadam Online</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>10</td><td>Gudang CDAKB</td><td>Administrasi</td><td>Papan Jalan Akrilik + Form Suhu</td><td>Papan jalan gantung jepit + print kertas HVS tabel pencatatan suhu gudang 2x sehari</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Set</td><td>Rp 15.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT</td><td>ATK / Fotokopi Terdekat</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>11</td><td>Gudang CDAKB</td><td>Pest Control</td><td>Perangkap Lem Tikus + Fly Trap Lem</td><td>Perangkap lem Cap Gajah untuk 4 sudut lantai + fly trap lem (bukan sengat kejut listrik kuman)</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Set</td><td>Rp 45.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Logistik</td><td>Supermarket / Toko Bahan Bangunan</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>12</td><td>Gudang CDAKB</td><td>K3 &amp; Safety</td><td>Kotak P3K Dinding Lengkap Isi</td><td>Standar Kemenkes (Kotak Maspion/Onemed isi kasa steril, plester, betadine, alkohol 70%, gunting)</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 80.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT</td><td>Apotek / Toko Alkes Online</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>13</td><td>Gudang CDAKB</td><td>Sanitasi</td><td>Sandal Selop Khusus Gudang</td><td>Sandal khusus area dalam gudang agar kotoran pasir/tanah luar tidak masuk ke area bersih</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>2</td><td>Pasang</td><td>Rp 25.000</td><td></td><td>0</td><td>P2 (Operasional)</td><td>Logistik</td><td>Toko Sandal Karet Lokal</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>14</td><td>Gudang CDAKB</td><td>Sanitasi</td><td>Kantung Sampah Plastik Hitam &amp; Kuning</td><td>Hitam untuk sampah domestik umum, kuning untuk limbah medis/alkes rusak</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>2</td><td>Pak</td><td>Rp 15.000</td><td></td><td>0</td><td>P2 (Operasional)</td><td>Logistik</td><td>Toko Plastik Terdekat</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>15</td><td>Zona D (QC)</td><td>Furnitur</td><td>Meja Kerja Inspeksi QC &amp; Sampling</td><td>Meja HPL kaki besi minimalis 120x60cm kokoh dan mudah dilap desinfektan alkohol</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 320.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT / QC</td><td>Marketplace (Aditech/Pira/Olympic)</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>16</td><td>Zona D (QC)</td><td>Furnitur</td><td>Kursi Staf QC Putar Jaring</td><td>Kursi putar kantor sandaran jaring breathable warna hitam</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 220.000</td><td></td><td>0</td><td>P2 (Operasional)</td><td>Logistik</td><td>Marketplace Kursi Kantor</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>17</td><td>Zona D (QC)</td><td>Furnitur</td><td>Credenza Kayu Bukaan Pass-Through</td><td>Credenza kayu laci bawaan di bukaan dinding (IMG_9180.JPG), untuk serah terima dokumen</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Unit</td><td>0</td><td></td><td>0</td><td>P2 (Operasional)</td><td>Logistik</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>18</td><td>Zona D (QC)</td><td>Teknis QC</td><td>Barcode &amp; QR Scanner USB Kabel</td><td>Scanner handheld kabel USB untuk membaca barcode izin edar Kemenkes AKL/AKD saat barang datang</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 135.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT / QC</td><td>Marketplace Elektronik/POS</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>19</td><td>Zona D (QC)</td><td>Administrasi</td><td>Stampel Flash &#x27;QC PASSED&#x27; (Hijau)</td><td>Stampel otomatis custom teks: QC PASSED - PT MAZIYA MEDICAL GLOBAL</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 35.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT / QC</td><td>Percetakan Stempel Online</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>20</td><td>Zona D (QC)</td><td>Pengemasan</td><td>Lakban Bening 48mm + Cutter Besar</td><td>Lakban tebal bening untuk packing koli alkes + cutter heavy duty</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Set</td><td>Rp 30.000</td><td></td><td>0</td><td>P2 (Operasional)</td><td>Logistik</td><td>Toko ATK</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>21</td><td>Zona D (QC)</td><td>Teknis QC</td><td>Kertas Stiker Label HVS A4 / T&amp;J</td><td>Alternatif printer thermal mahal: cetak label AKL di printer biasa pakai kertas stiker HVS A4</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>2</td><td>Pak</td><td>Rp 25.000</td><td></td><td>0</td><td>P2 (Operasional)</td><td>PJT</td><td>Toko Kertas / ATK</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>22</td><td>Zona D (QC)</td><td>Administrasi</td><td>Papan Whiteboard Gantung 60x40cm</td><td>Papan tulis gantung di Zona D untuk mencatat no resi kiriman ekspedisi &amp; target harian</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 45.000</td><td></td><td>0</td><td>P3 (Penunjang)</td><td>Logistik</td><td>Toko ATK</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>23</td><td>Ruang Direksi</td><td>Furnitur</td><td>Meja Kerja Panjang Ganda (150-160cm)</td><td>1 meja panjang lurus kaki besi minimalis cukup untuk diduduki Direktur &amp; Wadir berdampingan</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 450.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Direksi</td><td>Marketplace Meja Minimalis</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>24</td><td>Ruang Direksi</td><td>Furnitur</td><td>Kursi Direksi &amp; Wadir Putar Mesh</td><td>Kursi kerja ergonomis sandaran jaring breathable (dingin dan ringkas di ruangan 1.79m)</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>2</td><td>Unit</td><td>Rp 275.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Direksi</td><td>Marketplace Kursi Kantor</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>25</td><td>Ruang Direksi</td><td>Dekorasi</td><td>Kaligrafi Ukiran Kayu Jati Dinding</td><td>Hiasan dinding eksisting kaligrafi jati yang sudah terpasang rapi (IMG_9191_06.jpg)</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Unit</td><td>0</td><td></td><td>0</td><td>P2 (Operasional)</td><td>Direksi</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>26</td><td>Ruang Direksi</td><td>Kelistrikan</td><td>Stopkontak Arde 4 Lubang + Kabel 3m</td><td>Stopkontak kabel rapi untuk charger laptop pimpinan &amp; printer</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 45.000</td><td></td><td>0</td><td>P2 (Operasional)</td><td>Direksi</td><td>Toko Listrik</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>27</td><td>Ruang Direksi</td><td>Keamanan</td><td>Brankas Dokumen Kecil Digital Pin</td><td>Safety box 25L di sudut lemari untuk simpan Akta PT, NIB OSS, Sertifikat Standar CDAKB asli</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 380.000</td><td></td><td>0</td><td>P2 (Operasional)</td><td>Direksi</td><td>Marketplace Brankas Mini</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>28</td><td>Ruang PJT</td><td>Cold-Chain</td><td>Kulkas Farmasi 1 Pintu Marun</td><td>Kulkas eksisting satu pintu warna merah marun (IMG_9192_12.jpg) untuk alkes cold-chain 2-8°C</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Unit</td><td>0</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>29</td><td>Ruang PJT</td><td>Medis</td><td>Ranjang Periksa Medis Busa Putih</td><td>Ranjang periksa rangka kayu bantalan busa putih eksisting (IMG_9192_02.jpg)</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Unit</td><td>0</td><td></td><td>0</td><td>P2 (Operasional)</td><td>PJT</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>30</td><td>Ruang PJT</td><td>Medis</td><td>Lemari Obat Dinding Gantung Kaca</td><td>Lemari gantung eksisting (IMG_9192_22.jpg) untuk simpan sampel buffer alkes</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Unit</td><td>0</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>31</td><td>Ruang PJT</td><td>Fasilitas</td><td>Dispenser Air Minum</td><td>Dispenser air minum eksisting (IMG_9192_12.jpg)</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Unit</td><td>0</td><td></td><td>0</td><td>P3 (Penunjang)</td><td>PJT</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>32</td><td>Ruang PJT</td><td>Fasilitas</td><td>Tirai Jendela Hijau Bulat</td><td>Tirai gorden privasi eksisting (IMG_9189_62s.jpg) menghadap carport</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Set</td><td>0</td><td></td><td>0</td><td>P3 (Penunjang)</td><td>PJT</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>33</td><td>Ruang PJT</td><td>Furnitur</td><td>Meja &amp; Kursi Konseling Eksisting</td><td>Meja dan kursi yang sudah ada di dalam ruang konseling (IMG_9189_62s.jpg)</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Set</td><td>0</td><td></td><td>0</td><td>P2 (Operasional)</td><td>PJT</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>34</td><td>Ruang PJT</td><td>Cold-Chain</td><td>Termometer Kulkas Digital Kabel Probe</td><td>Layar display suhu ditempel di luar kulkas, sensor kabel probe masuk ke dalam rak kulkas</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 40.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT</td><td>Toko Alkes / Aquarium Digital</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>35</td><td>Ruang PJT</td><td>Keamanan</td><td>Gembok Kuningan Lemari Obat Dinding</td><td>Gembok kuningan kecil 25mm agar lemari obat sampel buffer terkunci sesuai syarat dinas</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 20.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT</td><td>Toko Kunci / Material</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>36</td><td>Ruang PJT</td><td>APD</td><td>Jas Lab Putih Panjang PJT</td><td>Jas lab kain drill putih berkancing untuk PJT saat inspeksi alkes &amp; sampling barang</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Pcs</td><td>Rp 85.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT</td><td>Konveksi Jas Medis Online</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>37</td><td>Ruang PJT</td><td>Dokumen</td><td>6 Map Ordner Binder Folio SOP CDAKB</td><td>Map ordner tebal 7cm untuk 6 modul SOP CDAKB (Pengadaan, Gudang, Suhu, Recall, Retur, CAPA)</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>6</td><td>Unit</td><td>Rp 25.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT</td><td>Toko ATK (Bantex/Gobi)</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>38</td><td>Ruang PJT</td><td>Administrasi</td><td>Stampel Flash &#x27;DIVERIFIKASI PJT&#x27;</td><td>Stampel flash custom teks: DIVERIFIKASI PJT - PT MAZIYA MEDICAL GLOBAL</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 35.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>PJT</td><td>Percetakan Stempel Online</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>39</td><td>Apotek/Lobby</td><td>Furnitur</td><td>Counter Vitrine Etalase Kaca Apotek</td><td>Counter etalase display kaca L-shape eksisting di depan, dirapikan tanpa beli baru</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Unit</td><td>0</td><td></td><td>0</td><td>P2 (Operasional)</td><td>Resepsionis</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>40</td><td>Kamar Mandi</td><td>Sanitair</td><td>Kloset Duduk &amp; Wastafel Eksisting</td><td>Kloset duduk putih dan wastafel eksisting (IMG_9191_02.jpg)</td><td class="cell-check-green">[✓] SUDAH ADA</td><td>1</td><td>Set</td><td>0</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Umum</td><td>Aset Eksisting Gedung</td><td class="cell-check-green">[✓] SELESAI</td></tr>
+<tr><td>41</td><td>Kamar Mandi</td><td>Sanitasi</td><td>Dispenser Sabun Dinding + Sabun 1L</td><td>Dispenser sabun cair cuci tangan manual di samping wastafel</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Set</td><td>Rp 45.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Umum</td><td>Toko Perlengkapan Rumah</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>42</td><td>Kamar Mandi</td><td>Sanitasi</td><td>Tempat Sampah Injak Pedal Bin</td><td>Tempat sampah bertutup injak pedal kaki agar tangan higienis</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 35.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Umum</td><td>Supermarket Terdekat</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>43</td><td>Kamar Mandi</td><td>Sanitasi</td><td>Keset Karet Anti-Slip</td><td>Keset karet bertekstur di luar pintu toilet agar air tidak membasahi lantai coklat</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Pcs</td><td>Rp 28.000</td><td></td><td>0</td><td>P2 (Operasional)</td><td>Umum</td><td>Toko Karpet / Rumah Tangga</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>44</td><td>Luar Gedung</td><td>Identitas</td><td>Spanduk Flexi Banner Papan Nama 2x1m</td><td>Spanduk banner outdoor flexi 280gsm: &#x27;PT MAZIYA MEDICAL GLOBAL - Distribusi Alkes Resmi&#x27;</td><td class="cell-check-amber">[ ] PERLU BELI</td><td>1</td><td>Unit</td><td>Rp 45.000</td><td></td><td>0</td><td class="cell-p1">P1 (Wajib)</td><td>Direksi</td><td>Percetakan Digital Printing</td><td class="cell-check-amber">[ ] PROSES</td></tr>
+<tr><td>TOTAL ANGGARAN PENGADAAN BARU (LOW BUDGET):</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+</table></div>
+        </div>
+
+        <div id="tab-sheet-2" class="sheet-tab-pane">
+          <div class="sheet-intro-box">
+            <strong>🌡️ Parameter Suhu Wajib CDAKB:</strong> Gudang Suhu Kamar Terkendali: <strong>20.0°C – 25.0°C (Maks 30°C)</strong> | RH Kelembaban: <strong>40% – 70%</strong> | Kulkas Cold-Chain: <strong>2.0°C – 8.0°C</strong>
+          </div>
+          <div class="sheet-table-wrapper"><table class="spreadsheet-table">
+<tr><td>PT MAZIYA MEDICAL GLOBAL - KARTU KENDALI MONITORING SUHU &amp; KELEMBABAN</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>STANDAR CDAKB: GUDANG SUHU KAMAR TERKENDALI (20.0°C - 25.0°C | RH 40% - 70%) &amp; KULKAS (2.0°C - 8.0°C)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><th></th><th>Waktu</th><th>Suhu (°C)</th><th>RH (%)</th><th>Paraf</th><th>Waktu</th><th>Suhu (°C)</th><th>RH (%)</th><th>Paraf</th><th>Pagi (°C)</th><th>Sore (°C)</th><th></th></tr>
+<tr><td>1</td><td>08:30</td><td>23.2</td><td>58</td><td>Andi</td><td>16:30</td><td>24.1</td><td>62</td><td>Andi</td><td>4.2</td><td>4.8</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>2</td><td>08:15</td><td>22.8</td><td>55</td><td>Andi</td><td>16:45</td><td>23.9</td><td>60</td><td>Andi</td><td>4</td><td>4.5</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>3</td><td>08:30</td><td>23</td><td>56</td><td>Andi</td><td>16:30</td><td>24.4</td><td>63</td><td>Andi</td><td>4.3</td><td>5</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>4</td><td>08:20</td><td>23.5</td><td>60</td><td>Andi</td><td>16:15</td><td>24.2</td><td>64</td><td>Andi</td><td>4.1</td><td>4.7</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>5</td><td>08:40</td><td>22.9</td><td>54</td><td>Andi</td><td>16:30</td><td>23.8</td><td>59</td><td>Andi</td><td>3.9</td><td>4.6</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>6</td><td>08:30</td><td>23.1</td><td>57</td><td>Andi</td><td>16:30</td><td>24</td><td>61</td><td>Andi</td><td>4.2</td><td>4.9</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>7</td><td>08:30</td><td>23.4</td><td>59</td><td>Andi</td><td>16:30</td><td>24.3</td><td>62</td><td>Andi</td><td>4.4</td><td>5.1</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>8</td><td>08:15</td><td>23</td><td>56</td><td>Andi</td><td>16:30</td><td>23.7</td><td>58</td><td>Andi</td><td>4</td><td>4.4</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>9</td><td>08:30</td><td>23.3</td><td>58</td><td>Andi</td><td>16:30</td><td>24.5</td><td>65</td><td>Andi</td><td>4.3</td><td>4.8</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>10</td><td>08:25</td><td>22.7</td><td>53</td><td>Andi</td><td>16:20</td><td>23.9</td><td>60</td><td>Andi</td><td>3.8</td><td>4.5</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>11</td><td>08:30</td><td>23.2</td><td>57</td><td>Andi</td><td>16:30</td><td>24.1</td><td>62</td><td>Andi</td><td>4.1</td><td>4.7</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>12</td><td>08:35</td><td>23.6</td><td>61</td><td>Andi</td><td>16:40</td><td>24.6</td><td>66</td><td>Andi</td><td>4.5</td><td>5.2</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>13</td><td>08:30</td><td>23.1</td><td>56</td><td>Andi</td><td>16:30</td><td>24</td><td>60</td><td>Andi</td><td>4.2</td><td>4.6</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>14</td><td>08:20</td><td>22.9</td><td>55</td><td>Andi</td><td>16:30</td><td>23.8</td><td>59</td><td>Andi</td><td>4</td><td>4.4</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>15</td><td>08:30</td><td>23.3</td><td>58</td><td>Andi</td><td>16:30</td><td>24.2</td><td>63</td><td>Andi</td><td>4.3</td><td>4.9</td><td class="cell-check-green">[✓] NORMAL (Sesuai Standar)</td></tr>
+<tr><td>16</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>17</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>18</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>19</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>20</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>21</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>22</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>23</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>24</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>25</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>26</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>27</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>28</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>29</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+<tr><td>30</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">[ ] BELUM TERISI</td></tr>
+</table></div>
+        </div>
+
+        <div id="tab-sheet-3" class="sheet-tab-pane">
+          <div class="sheet-intro-box">
+            <strong>🧹 Inspeksi Sanitasi &amp; Hama Harian:</strong> Memastikan lantai bersih, rak alkes berjarak 30cm dari dinding, alkes di atas palet, lemari karantina merah terkunci, dan perangkap tikus/lalat termonitor.
+          </div>
+          <div class="sheet-table-wrapper"><table class="spreadsheet-table">
+<tr><td>PT MAZIYA MEDICAL GLOBAL - CHECKLIST SANITASI, KEBERSIHAN &amp; PEST CONTROL</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>INSPEKSI RUTIN HARIAN SARANA GUDANG &amp; KANTOR SESUAI STANDAR CDAKB PERMENKES NO. 14/2021</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><th>Tgl</th><th>Lantai Bersih &amp; Dipel</th><th>Rak Bebas Debu &amp; Sarang</th><th>Jarak Dinding ≥ 30cm</th><th>Semua Alkes di Atas Palet</th><th>Lemari Karantina Terkunci</th><th>Wastafel / Sink Bersih</th><th>Perangkap Tikus 1-4 Aman</th><th>Lampu UV Fly Trap Aktif</th><th>Kamar Mandi &amp; Sabun Siap</th><th>Status &amp; Paraf PJT</th></tr>
+<tr><td>1</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>2</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>3</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>4</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>5</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>6</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>7</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>8</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>9</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>10</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>11</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>12</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>13</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>14</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>15</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] OK (PJT: dr/Apt)</td></tr>
+<tr><td>16</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>17</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>18</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>19</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>20</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>21</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>22</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>23</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>24</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>25</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>26</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>27</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>28</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>29</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+<tr><td>30</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td></tr>
+</table></div>
+        </div>
+
+        <div id="tab-sheet-4" class="sheet-tab-pane">
+          <div class="sheet-intro-box">
+            <strong>🔍 Pemeriksaan QC Barang Datang:</strong> Verifikasi nomor izin edar Kemenkes RI (AKL/AKD), integritas segel steril, keutuhan karton sekunder, nomor lot/bets pabrik, dan sertifikat analisa (CoA).
+          </div>
+          <div class="sheet-table-wrapper"><table class="spreadsheet-table">
+<tr><td>PT MAZIYA MEDICAL GLOBAL - LEMBAR VERIFIKASI QC PENERIMAAN BARANG (RECEIVING)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>VERIFIKASI FISIK, INTEGRITAS KEMASAN, IZIN EDAR AKL/AKD, &amp; KELENGKAPAN SERTIFIKAT ANALISA (COA)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><th>No. Terima</th><th>Tanggal</th><th>Pemasok / Prinsipal</th><th>Nama Produk Alat Kesehatan</th><th>No Izin Edar Kemenkes (AKL/AKD)</th><th>No. Bets / Lot</th><th>Expired Date</th><th>Jumlah</th><th>Segel Utuh</th><th>Karton Baik</th><th>Label B.Indo</th><th>CoA Terlampir</th><th>Keputusan QC</th><th>Paraf PJT / QC</th></tr>
+<tr><td>RCV-2026-1101</td><td>01/11/2026</td><td>PT Medika Nusantara</td><td>Infusion Set Dewasa Sterile</td><td>KEMENKES RI AKD 20902123456</td><td>LOT-2610A</td><td>10/2029</td><td>50 Karton</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] DITERIMA (Lolos)</td><td>dr. PJT / Andi</td></tr>
+<tr><td>RCV-2026-1102</td><td>02/11/2026</td><td>PT Sarana Medika Global</td><td>Spuit 3cc Disposable Syringe</td><td>KEMENKES RI AKL 20902987654</td><td>LOT-2610B</td><td>11/2029</td><td>100 Box</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] DITERIMA (Lolos)</td><td>dr. PJT / Andi</td></tr>
+<tr><td>RCV-2026-1103</td><td>03/11/2026</td><td>PT Jaya Abadi Medika</td><td>Tensimeter Digital Lengan</td><td>KEMENKES RI AKL 20501876543</td><td>LOT-2609C</td><td>09/2031</td><td>20 Unit</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] DITERIMA (Lolos)</td><td>dr. PJT / Andi</td></tr>
+<tr><td>RCV-2026-1104</td><td>05/11/2026</td><td>PT Prima Reagen Husada</td><td>Rapid Test Diagnostic Kit</td><td>KEMENKES RI AKL 20303765432</td><td>LOT-2610D</td><td>04/2028</td><td>30 Kit</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] DITERIMA (Cold Chain)</td><td>dr. PJT / Andi</td></tr>
+<tr><td>RCV-2026-1105</td><td>08/11/2026</td><td>PT Kimia Farma Trading</td><td>Kasa Steril Hidrofil 16x16</td><td>KEMENKES RI AKD 10901654321</td><td>LOT-2608E</td><td>08/2029</td><td>80 Karton</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">☑ YA</td><td class="cell-check-green">[✓] DITERIMA (Lolos)</td><td>dr. PJT / Andi</td></tr>
+<tr><td>RCV-2026-1106</td><td>10/11/2026</td><td>PT Sumber Sehat Alkes</td><td>Jarum Bedah Surgical Needle</td><td>KEMENKES RI AKL 10902543210</td><td>LOT-2607F</td><td>07/2029</td><td>15 Box</td><td class="cell-check-amber">☒ Rusak</td><td class="cell-check-amber">☒ Basah</td><td class="cell-check-green">☑ YA</td><td class="cell-check-amber">☒ Tidak</td><td class="cell-check-amber">[✕] DITOLAK (Karantina)</td><td>dr. PJT / Andi</td></tr>
+<tr><td>RCV-2026-1107</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1108</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1109</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1110</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1111</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1112</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1113</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1114</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1115</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1116</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1117</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1118</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+<tr><td>RCV-2026-1119</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">☐</td><td class="cell-check-amber">[ ] Menunggu</td><td></td></tr>
+</table></div>
+        </div>
       </div>
     </div>
   </div>
